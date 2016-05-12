@@ -1,4 +1,4 @@
-package drewmahrt.generalassemb.ly.crowdvision;
+package net.dividedattention.crowdvision;
 
 import android.app.Application;
 import android.test.ApplicationTestCase;
