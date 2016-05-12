@@ -3,7 +3,6 @@ package net.dividedattention.crowdvision;
 import android.content.Intent;
 import android.os.Bundle;
 import android.support.design.widget.FloatingActionButton;
-import android.support.design.widget.Snackbar;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.Toolbar;
@@ -17,13 +16,13 @@ import com.firebase.client.Firebase;
 import com.firebase.ui.auth.core.AuthProviderType;
 import com.firebase.ui.auth.core.FirebaseLoginError;
 
-import net.dividedattention.crowdvision.adapters.EventRecyclerViewAdapter;
+import net.dividedattention.crowdvision.adapters.EventListRecyclerViewAdapter;
 import net.dividedattention.crowdvision.firebaselogin.CustomFirebaseLoginActivity;
 
 public class EventListActivity extends CustomFirebaseLoginActivity {
 
     private Firebase mFirebaseRef;
-    private EventRecyclerViewAdapter mAdapter;
+    private EventListRecyclerViewAdapter mAdapter;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -47,7 +46,7 @@ public class EventListActivity extends CustomFirebaseLoginActivity {
         RecyclerView recyclerView = (RecyclerView)findViewById(R.id.events_list);
         recyclerView.setHasFixedSize(true);
         recyclerView.setLayoutManager(new LinearLayoutManager(this));
-        mAdapter = new EventRecyclerViewAdapter(CrowdEvent.class,R.layout.event_card,EventRecyclerViewAdapter.EventViewHolder.class,mFirebaseRef,this);
+        mAdapter = new EventListRecyclerViewAdapter(CrowdEvent.class,R.layout.event_card,EventListRecyclerViewAdapter.EventViewHolder.class,mFirebaseRef,this);
         recyclerView.setAdapter(mAdapter);
     }
 
@@ -104,12 +103,10 @@ public class EventListActivity extends CustomFirebaseLoginActivity {
 
     @Override
     public void onFirebaseLoggedIn(AuthData authData) {
-        Toast.makeText(EventListActivity.this, "Logged in", Toast.LENGTH_SHORT).show();
     }
 
     @Override
     public void onFirebaseLoggedOut() {
-        Toast.makeText(EventListActivity.this, "Logged out", Toast.LENGTH_SHORT).show();
         showFirebaseLoginPrompt();
     }
 }

@@ -1,11 +1,15 @@
 package net.dividedattention.crowdvision;
 
 import android.app.DatePickerDialog;
+import android.content.Context;
 import android.content.Intent;
 import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.graphics.Color;
 import android.net.Uri;
+import android.os.AsyncTask;
 import android.provider.MediaStore;
+import android.provider.Settings;
 import android.support.design.widget.Snackbar;
 import android.support.v7.app.ActionBar;
 import android.support.v7.app.AppCompatActivity;
@@ -15,16 +19,28 @@ import android.widget.Button;
 import android.widget.DatePicker;
 import android.widget.EditText;
 import android.widget.ImageView;
+import android.widget.ProgressBar;
 import android.widget.Toast;
 
+import com.amazonaws.auth.CognitoCachingCredentialsProvider;
+import com.amazonaws.mobileconnectors.s3.transferutility.TransferObserver;
+import com.amazonaws.mobileconnectors.s3.transferutility.TransferUtility;
+import com.amazonaws.regions.Region;
+import com.amazonaws.regions.Regions;
+import com.amazonaws.services.s3.AmazonS3;
+import com.amazonaws.services.s3.AmazonS3Client;
 import com.firebase.client.Firebase;
 
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.Calendar;
 
 public class CreateEventActivity extends AppCompatActivity implements DatePickerDialog.OnDateSetListener{
     Button mEndDateButton, mSubmitButton, mChooseImageButton;
     EditText mTitleText, mLocationText;
+    ProgressBar mProgressBar;
     ImageView mEventImageView;
     String mEndDate;
     Bitmap mSelectedImage;
@@ -49,19 +65,16 @@ public class CreateEventActivity extends AppCompatActivity implements DatePicker
 
         mEventImageView = (ImageView)findViewById(R.id.event_image);
 
+        mProgressBar = (ProgressBar)findViewById(R.id.progressBar);
+
         mFirebaseRef = new Firebase(Constants.FIREBASE_EVENTS);
 
         mSubmitButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 if(checkEventData()){
-                    CrowdEvent event = new CrowdEvent(mTitleText.getText().toString(),
-                            mLocationText.getText().toString(),
-                            mEndDate,
-                            null,
-                            "https://www.omnihotels.com/-/media/images/hotels/cltdtn/destinations/cltdtn-omni-charlotte-hotel-skyline-night.jpg?h=660&la=en&w=1170");
-                    mFirebaseRef.push().setValue(event);
-                    finish();
+                    AmazonUploadTask task = new AmazonUploadTask();
+                    task.execute();
                 }
             }
         });
@@ -141,6 +154,80 @@ public class CreateEventActivity extends AppCompatActivity implements DatePicker
                     e.printStackTrace();
                 }
             }
+        }
+    }
+
+    private class AmazonUploadTask extends AsyncTask<Void,Void,String>{
+        @Override
+        protected void onPreExecute() {
+            super.onPreExecute();
+            mProgressBar.setVisibility(View.VISIBLE);
+        }
+
+        @Override
+        protected String doInBackground(Void... params) {
+            String amazonFileName = "";
+
+            CognitoCachingCredentialsProvider credentialsProvider = new CognitoCachingCredentialsProvider(
+                    getApplicationContext(),    /* get the context for the application */
+                    "",    /* Identity Pool ID */
+                    Regions.US_EAST_1           /* Region for your identity pool--US_EAST_1 or EU_WEST_1*/
+            );
+
+            // Create an S3 client
+            AmazonS3 s3 = new AmazonS3Client(credentialsProvider);
+
+            // Set the region of your S3 bucket
+            s3.setRegion(Region.getRegion(Regions.US_EAST_1));
+
+            TransferUtility transferUtility = new TransferUtility(s3, getApplicationContext());
+
+            FileOutputStream fop = null;
+
+            try {
+                String fileName = "newImage.jpg";
+
+                File imageFile = new File(getFilesDir(),fileName);
+                fop = new FileOutputStream(imageFile);
+                mSelectedImage.compress(Bitmap.CompressFormat.JPEG,30,fop);
+
+                amazonFileName = System.currentTimeMillis() + "_" + mSelectedImage.getByteCount()+".jpg";
+
+                TransferObserver observer = transferUtility.upload(
+                        "crowdvision",     /* The bucket to upload to */
+                        System.currentTimeMillis() + "_" + mSelectedImage.getByteCount()+".jpg",    /* The key for the uploaded object */
+                        imageFile        /* The file where the data to upload exists */
+                );
+
+
+
+            }catch (Exception e){
+                e.printStackTrace();
+            }finally {
+                try {
+                    if (fop != null) {
+                        fop.flush();
+                        fop.close();
+                    }
+                }catch(Exception e){
+                    e.printStackTrace();
+                }
+            }
+
+            return "https://s3.amazonaws.com/crowdvision/"+amazonFileName;
+        }
+
+        @Override
+        protected void onPostExecute(String s) {
+            super.onPostExecute(s);
+            CrowdEvent event = new CrowdEvent(mTitleText.getText().toString(),
+                    mLocationText.getText().toString(),
+                    mEndDate,
+                    null,
+                    s);
+            mFirebaseRef.push().setValue(event);
+            mProgressBar.setVisibility(View.GONE);
+            finish();
         }
     }
 }
