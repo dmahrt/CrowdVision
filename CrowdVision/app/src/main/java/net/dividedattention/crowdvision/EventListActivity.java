@@ -6,23 +6,31 @@ import android.support.design.widget.FloatingActionButton;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.Toolbar;
+import android.util.Log;
 import android.view.View;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.widget.Toast;
 
 import com.firebase.client.AuthData;
+import com.firebase.client.ChildEventListener;
+import com.firebase.client.DataSnapshot;
 import com.firebase.client.Firebase;
+import com.firebase.client.FirebaseError;
 import com.firebase.ui.auth.core.AuthProviderType;
 import com.firebase.ui.auth.core.FirebaseLoginError;
 
 import net.dividedattention.crowdvision.adapters.EventListRecyclerViewAdapter;
 import net.dividedattention.crowdvision.firebaselogin.CustomFirebaseLoginActivity;
 
+import java.util.ArrayList;
+
 public class EventListActivity extends CustomFirebaseLoginActivity {
 
     private Firebase mFirebaseRef;
     private EventListRecyclerViewAdapter mAdapter;
+
+    public ArrayList<String> mEventKeys;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -41,13 +49,45 @@ public class EventListActivity extends CustomFirebaseLoginActivity {
             }
         });
 
+        mEventKeys = new ArrayList<>();
         mFirebaseRef = new Firebase(Constants.FIREBASE_EVENTS);
+
+        mFirebaseRef.addChildEventListener(new ChildEventListener() {
+            @Override
+            public void onChildAdded(DataSnapshot dataSnapshot, String s) {
+                Log.d(EventListActivity.class.getName(),"Key added: "+dataSnapshot.getKey());
+                mEventKeys.add(dataSnapshot.getKey());
+            }
+
+            @Override
+            public void onChildChanged(DataSnapshot dataSnapshot, String s) {
+
+            }
+
+            @Override
+            public void onChildRemoved(DataSnapshot dataSnapshot) {
+                Log.d(EventListActivity.class.getName(),"Key removed: "+dataSnapshot.getKey());
+                mEventKeys.remove(dataSnapshot.getKey());
+            }
+
+            @Override
+            public void onChildMoved(DataSnapshot dataSnapshot, String s) {
+
+            }
+
+            @Override
+            public void onCancelled(FirebaseError firebaseError) {
+
+            }
+        });
 
         RecyclerView recyclerView = (RecyclerView)findViewById(R.id.events_list);
         recyclerView.setHasFixedSize(true);
         recyclerView.setLayoutManager(new LinearLayoutManager(this));
         mAdapter = new EventListRecyclerViewAdapter(CrowdEvent.class,R.layout.event_card,EventListRecyclerViewAdapter.EventViewHolder.class,mFirebaseRef,this);
         recyclerView.setAdapter(mAdapter);
+
+
     }
 
     @Override

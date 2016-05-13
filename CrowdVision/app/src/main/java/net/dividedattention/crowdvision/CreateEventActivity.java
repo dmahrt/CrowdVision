@@ -225,7 +225,9 @@ public class CreateEventActivity extends AppCompatActivity implements DatePicker
                     mEndDate,
                     null,
                     s);
-            mFirebaseRef.push().setValue(event);
+            Firebase subRef = mFirebaseRef.push();
+            event.setKey(subRef.getKey());
+            subRef.setValue(event);
             mProgressBar.setVisibility(View.GONE);
             finish();
         }

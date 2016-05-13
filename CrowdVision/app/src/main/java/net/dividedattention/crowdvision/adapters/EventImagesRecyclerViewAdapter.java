@@ -17,20 +17,19 @@ import net.dividedattention.crowdvision.R;
 /**
  * Created by drewmahrt on 5/11/16.
  */
-public class EventImagesRecyclerViewAdapter extends FirebaseRecyclerAdapter<CrowdEvent,EventImagesRecyclerViewAdapter.EventViewHolder> {
+public class EventImagesRecyclerViewAdapter extends FirebaseRecyclerAdapter<String,EventImagesRecyclerViewAdapter.EventViewHolder> {
     private Context context;
 
-    public EventImagesRecyclerViewAdapter(Class<CrowdEvent> modelClass, int modelLayout, Class<EventViewHolder> viewHolderClass, Firebase ref, Context context) {
+    public EventImagesRecyclerViewAdapter(Class<String> modelClass, int modelLayout, Class<EventViewHolder> viewHolderClass, Firebase ref, Context context) {
         super(modelClass, modelLayout, viewHolderClass, ref);
         this.context = context;
     }
 
     @Override
-    protected void populateViewHolder(EventViewHolder eventViewHolder, CrowdEvent crowdEvent, int i) {
+    protected void populateViewHolder(EventViewHolder eventViewHolder, String s, int i) {
         Glide.with(context)
-                .load(crowdEvent.getPhotoUrls().values().toArray()[i])
+                .load(s)
                 .diskCacheStrategy(DiskCacheStrategy.ALL)
-                .centerCrop()
                 .into(eventViewHolder.imageView);
     }
 
@@ -39,7 +38,7 @@ public class EventImagesRecyclerViewAdapter extends FirebaseRecyclerAdapter<Crow
 
         public EventViewHolder(View itemView) {
             super(itemView);
-            imageView = (ImageView)itemView.findViewById(R.id.event_image);
+            imageView = (ImageView)itemView.findViewById(R.id.image);
         }
     }
 }

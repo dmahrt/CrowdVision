@@ -11,6 +11,7 @@ public class CrowdEvent {
     private String endDate;
     private String coverImageUrl;
     private Map<String,String> photoUrls;
+    private String key;
 
     public CrowdEvent(String title, String location, String endDate, Map<String,String> photoUrls, String coverImageUrl) {
         this.title = title;
@@ -42,5 +43,13 @@ public class CrowdEvent {
 
     public String getCoverImageUrl(){
         return coverImageUrl;
+    }
+
+    public String getKey(){
+        return key;
+    }
+
+    public void setKey(String key){
+        this.key = key;
     }
 }
