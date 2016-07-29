@@ -2,17 +2,19 @@ package net.dividedattention.crowdvision;
 
 import android.content.Intent;
 import android.graphics.Bitmap;
+import android.graphics.drawable.BitmapDrawable;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
 import android.provider.MediaStore;
 import android.support.design.widget.FloatingActionButton;
-import android.support.design.widget.Snackbar;
+import android.support.v4.app.FragmentTransaction;
 import android.support.v7.app.AppCompatActivity;
-import android.support.v7.widget.GridLayoutManager;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.StaggeredGridLayoutManager;
 import android.support.v7.widget.Toolbar;
+import android.transition.Fade;
 import android.view.View;
 
 import com.amazonaws.auth.CognitoCachingCredentialsProvider;
@@ -22,20 +24,21 @@ import com.amazonaws.regions.Region;
 import com.amazonaws.regions.Regions;
 import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.AmazonS3Client;
-import com.firebase.client.Firebase;
+import com.bumptech.glide.load.resource.bitmap.GlideBitmapDrawable;
+import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.database.FirebaseDatabase;
 
 import net.dividedattention.crowdvision.adapters.EventImagesRecyclerViewAdapter;
-import net.dividedattention.crowdvision.adapters.EventListRecyclerViewAdapter;
 
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 
-public class EventPhotosActivity extends AppCompatActivity {
+public class EventPhotosActivity extends AppCompatActivity implements PhotoClickListener {
     private int PICK_IMAGE_REQUEST = 1;
 
     private EventImagesRecyclerViewAdapter mAdapter;
-    private Firebase mFirebaseRef;
+    private DatabaseReference mFirebaseRootRef, mFirebaseRef;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -48,14 +51,16 @@ public class EventPhotosActivity extends AppCompatActivity {
 
         String eventKey = getIntent().getStringExtra("eventKey");
 
-        mFirebaseRef = new Firebase(Constants.FIREBASE_EVENTS+"/"+eventKey+"/photoUrls");
+        mFirebaseRootRef = FirebaseDatabase.getInstance().getReference();
+        mFirebaseRef = mFirebaseRootRef.child("events/"+eventKey+"/photoUrls");
+
         mAdapter = new EventImagesRecyclerViewAdapter(String.class,R.layout.photo_layout,EventImagesRecyclerViewAdapter.EventViewHolder.class,mFirebaseRef,this);
 
         StaggeredGridLayoutManager staggeredGridLayoutManager = new StaggeredGridLayoutManager(2,StaggeredGridLayoutManager.VERTICAL);
-
+        LinearLayoutManager linearLayoutManager = new LinearLayoutManager(this);
         RecyclerView recyclerView = (RecyclerView)findViewById(R.id.photos_recycler);
         recyclerView.setHasFixedSize(true);
-        recyclerView.setLayoutManager(staggeredGridLayoutManager);
+        recyclerView.setLayoutManager(linearLayoutManager);
         recyclerView.setAdapter(mAdapter);
 
         FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.fab);
@@ -80,7 +85,7 @@ public class EventPhotosActivity extends AppCompatActivity {
 
                 CognitoCachingCredentialsProvider credentialsProvider = new CognitoCachingCredentialsProvider(
                         getApplicationContext(),    /* get the context for the application */
-                        "",    /* Identity Pool ID */
+                        ,    /* Identity Pool ID */
                         Regions.US_EAST_1           /* Region for your identity pool--US_EAST_1 or EU_WEST_1*/
                 );
 
@@ -118,5 +123,24 @@ public class EventPhotosActivity extends AppCompatActivity {
                 }
             }
         }
+    }
+
+
+    @Override
+    public void onPhotoClicked(EventImagesRecyclerViewAdapter.EventViewHolder viewHolder, int position) {
+        PhotoDialogFragment fragment = PhotoDialogFragment.newInstance(((GlideBitmapDrawable)viewHolder.imageView.getDrawable()).getBitmap(),position+"_image");
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+            fragment.setSharedElementEnterTransition(new ExpandedPhotoTransition());
+            fragment.setEnterTransition(new Fade());
+            fragment.setExitTransition(new Fade());
+            fragment.setSharedElementReturnTransition(new ExpandedPhotoTransition());
+        }
+
+        //fragment.show(getSupportFragmentManager(),"expanded_dialog");
+        FragmentTransaction transaction = getSupportFragmentManager().beginTransaction();
+        transaction.addSharedElement(viewHolder.imageView,position+"_image");
+        fragment.show(transaction,"expanded_dialog");
+
+
     }
 }

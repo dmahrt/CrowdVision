@@ -29,7 +29,8 @@ import com.amazonaws.regions.Region;
 import com.amazonaws.regions.Regions;
 import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.AmazonS3Client;
-import com.firebase.client.Firebase;
+import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.database.FirebaseDatabase;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -44,7 +45,7 @@ public class CreateEventActivity extends AppCompatActivity implements DatePicker
     ImageView mEventImageView;
     String mEndDate;
     Bitmap mSelectedImage;
-    Firebase mFirebaseRef;
+    DatabaseReference mFirebaseRef;
 
     private int PICK_IMAGE_REQUEST = 1;
 
@@ -67,7 +68,7 @@ public class CreateEventActivity extends AppCompatActivity implements DatePicker
 
         mProgressBar = (ProgressBar)findViewById(R.id.progressBar);
 
-        mFirebaseRef = new Firebase(Constants.FIREBASE_EVENTS);
+        mFirebaseRef = FirebaseDatabase.getInstance().getReference().child("events");
 
         mSubmitButton.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -170,7 +171,7 @@ public class CreateEventActivity extends AppCompatActivity implements DatePicker
 
             CognitoCachingCredentialsProvider credentialsProvider = new CognitoCachingCredentialsProvider(
                     getApplicationContext(),    /* get the context for the application */
-                    "",    /* Identity Pool ID */
+                    ,    /* Identity Pool ID */
                     Regions.US_EAST_1           /* Region for your identity pool--US_EAST_1 or EU_WEST_1*/
             );
 
@@ -225,7 +226,7 @@ public class CreateEventActivity extends AppCompatActivity implements DatePicker
                     mEndDate,
                     null,
                     s);
-            Firebase subRef = mFirebaseRef.push();
+            DatabaseReference subRef = mFirebaseRef.push();
             event.setKey(subRef.getKey());
             subRef.setValue(event);
             mProgressBar.setVisibility(View.GONE);

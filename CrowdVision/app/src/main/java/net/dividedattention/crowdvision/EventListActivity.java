@@ -2,7 +2,9 @@ package net.dividedattention.crowdvision;
 
 import android.content.Intent;
 import android.os.Bundle;
+import android.support.annotation.NonNull;
 import android.support.design.widget.FloatingActionButton;
+import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.Toolbar;
@@ -12,22 +14,25 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.widget.Toast;
 
-import com.firebase.client.AuthData;
-import com.firebase.client.ChildEventListener;
-import com.firebase.client.DataSnapshot;
-import com.firebase.client.Firebase;
-import com.firebase.client.FirebaseError;
-import com.firebase.ui.auth.core.AuthProviderType;
-import com.firebase.ui.auth.core.FirebaseLoginError;
+import com.firebase.ui.auth.AuthUI;
+import com.google.android.gms.tasks.OnCompleteListener;
+import com.google.android.gms.tasks.Task;
+import com.google.firebase.FirebaseApp;
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.database.ChildEventListener;
+import com.google.firebase.database.DataSnapshot;
+import com.google.firebase.database.DatabaseError;
+import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.database.FirebaseDatabase;
 
 import net.dividedattention.crowdvision.adapters.EventListRecyclerViewAdapter;
-import net.dividedattention.crowdvision.firebaselogin.CustomFirebaseLoginActivity;
 
 import java.util.ArrayList;
 
-public class EventListActivity extends CustomFirebaseLoginActivity {
+public class EventListActivity extends AppCompatActivity {
 
-    private Firebase mFirebaseRef;
+
+    private DatabaseReference mFirebaseRef;
     private EventListRecyclerViewAdapter mAdapter;
 
     public ArrayList<String> mEventKeys;
@@ -50,7 +55,7 @@ public class EventListActivity extends CustomFirebaseLoginActivity {
         });
 
         mEventKeys = new ArrayList<>();
-        mFirebaseRef = new Firebase(Constants.FIREBASE_EVENTS);
+        mFirebaseRef = FirebaseDatabase.getInstance().getReference().child("events");
 
         mFirebaseRef.addChildEventListener(new ChildEventListener() {
             @Override
@@ -76,7 +81,7 @@ public class EventListActivity extends CustomFirebaseLoginActivity {
             }
 
             @Override
-            public void onCancelled(FirebaseError firebaseError) {
+            public void onCancelled(DatabaseError databaseError) {
 
             }
         });
@@ -86,8 +91,6 @@ public class EventListActivity extends CustomFirebaseLoginActivity {
         recyclerView.setLayoutManager(new LinearLayoutManager(this));
         mAdapter = new EventListRecyclerViewAdapter(CrowdEvent.class,R.layout.event_card,EventListRecyclerViewAdapter.EventViewHolder.class,mFirebaseRef,this);
         recyclerView.setAdapter(mAdapter);
-
-
     }
 
     @Override
@@ -108,45 +111,23 @@ public class EventListActivity extends CustomFirebaseLoginActivity {
         if (id == R.id.action_settings) {
             return true;
         } else if(id == R.id.action_logout){
-            logout();
+            AuthUI.getInstance(FirebaseApp.getInstance())
+                    .signOut(this)
+                    .addOnCompleteListener(new OnCompleteListener<Void>() {
+                        public void onComplete(@NonNull Task<Void> task) {
+                            // user is now signed out
+                            startActivity(new Intent(EventListActivity.this, LoginActivity.class));
+                            finish();
+                        }
+                    });
         }
 
         return super.onOptionsItemSelected(item);
     }
 
     @Override
-    protected void onStart() {
-        super.onStart();
-        setEnabledAuthProvider(AuthProviderType.FACEBOOK);
-    }
-
-    @Override
-    protected Firebase getFirebaseRef() {
-        return new Firebase(Constants.FIREBASE_BASE_URL);
-    }
-
-    @Override
-    protected void onFirebaseLoginProviderError(FirebaseLoginError firebaseLoginError) {
-        Toast.makeText(EventListActivity.this, "Provider Error", Toast.LENGTH_SHORT).show();
-    }
-
-    @Override
-    protected void onFirebaseLoginUserError(FirebaseLoginError firebaseLoginError) {
-        Toast.makeText(EventListActivity.this, "User Error", Toast.LENGTH_SHORT).show();
-    }
-
-    @Override
     protected void onDestroy() {
         super.onDestroy();
-        mAdapter.cleanup();
-    }
-
-    @Override
-    public void onFirebaseLoggedIn(AuthData authData) {
-    }
-
-    @Override
-    public void onFirebaseLoggedOut() {
-        showFirebaseLoginPrompt();
+        //mAdapter.cleanup();
     }
 }

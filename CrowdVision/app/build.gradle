@@ -23,6 +23,11 @@ android {
         exclude 'META-INF/LICENSE-FIREBASE.txt'
         exclude 'META-INF/NOTICE'
     }
+
+    configurations.all {
+        resolutionStrategy.force 'com.google.firebase:firebase-auth:9.2.1'
+        resolutionStrategy.force 'com.google.android.gms:play-services-auth:9.2.1'
+    }
 }
 
 dependencies {
@@ -31,14 +36,17 @@ dependencies {
     compile 'com.android.support:appcompat-v7:23.3.0'
     compile 'com.android.support:cardview-v7:23.3.0'
     compile 'com.android.support:design:23.3.0'
-    compile 'com.firebase:firebase-client-android:2.5.2+'
-    compile 'com.firebaseui:firebase-ui:0.3.1'
     compile 'com.github.bumptech.glide:glide:3.7.0'
     compile 'com.android.support:support-v4:23.3.0'
-    compile 'com.facebook.android:facebook-android-sdk:4.6.0'
-    compile 'com.google.android.gms:play-services-auth:8.3.0'
     compile 'com.amazonaws:aws-android-sdk-core:2.+'
     compile 'com.amazonaws:aws-android-sdk-cognito:2.+'
     compile 'com.amazonaws:aws-android-sdk-s3:2.+'
     compile 'com.amazonaws:aws-android-sdk-ddb:2.+'
+    compile 'com.firebaseui:firebase-ui:0.4.0'
+    compile 'com.firebaseui:firebase-ui-auth:0.4.0'
+    compile "com.google.firebase:firebase-database:9.2.1"
+    compile 'com.google.firebase:firebase-auth:9.2.1'
+    compile 'com.google.firebase:firebase-messaging:9.2.1'
 }
+
+apply plugin: 'com.google.gms.google-services'
