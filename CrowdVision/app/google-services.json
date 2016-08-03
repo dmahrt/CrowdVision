@@ -1,21 +1,21 @@
 {
   "project_info": {
-    "project_number": "446057231792",
-    "firebase_url": "https://crowdvision.firebaseio.com",
-    "project_id": "project-753803659971388816",
-    "storage_bucket": "project-753803659971388816.appspot.com"
+    "project_number": "832982024413",
+    "firebase_url": "https://crowdvision-d92f7.firebaseio.com",
+    "project_id": "crowdvision-d92f7",
+    "storage_bucket": "crowdvision-d92f7.appspot.com"
   },
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:446057231792:android:df1865478b817854",
+        "mobilesdk_app_id": "1:832982024413:android:df1865478b817854",
         "android_client_info": {
           "package_name": "net.dividedattention.crowdvision"
         }
       },
       "oauth_client": [
         {
-          "client_id": "446057231792-8e56621f0tdhprof0hqovqqccg80m9f2.apps.googleusercontent.com",
+          "client_id": "832982024413-th7coerq2cm08h2bodult305ppk4uno0.apps.googleusercontent.com",
           "client_type": 1,
           "android_info": {
             "package_name": "net.dividedattention.crowdvision",
@@ -23,13 +23,13 @@
           }
         },
         {
-          "client_id": "446057231792-hp12drdiss67sancglcvgqns6807qubi.apps.googleusercontent.com",
+          "client_id": "832982024413-adanuh94dojm02ne58pqsti2hbov7r6f.apps.googleusercontent.com",
           "client_type": 3
         }
       ],
       "api_key": [
         {
-          "current_key": "AIzaSyDZNAjulCxAvWDbAha-0eV5p8b6Ln_suns"
+          "current_key": "AIzaSyBEsVCAuLea9Zu6OmqveJmOP6cFI3HadbI"
         }
       ],
       "services": {
@@ -40,7 +40,7 @@
           "status": 2,
           "other_platform_oauth_client": [
             {
-              "client_id": "446057231792-hp12drdiss67sancglcvgqns6807qubi.apps.googleusercontent.com",
+              "client_id": "832982024413-adanuh94dojm02ne58pqsti2hbov7r6f.apps.googleusercontent.com",
               "client_type": 3
             }
           ]
