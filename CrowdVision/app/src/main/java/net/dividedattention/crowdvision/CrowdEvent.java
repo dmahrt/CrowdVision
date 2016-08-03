@@ -10,14 +10,14 @@ public class CrowdEvent {
     private String location;
     private String endDate;
     private String coverImageUrl;
-    private Map<String,String> photoUrls;
+    private Map<String,Photo> photos;
     private String key;
 
-    public CrowdEvent(String title, String location, String endDate, Map<String,String> photoUrls, String coverImageUrl) {
+    public CrowdEvent(String title, String location, String endDate, Map<String,Photo> photos, String coverImageUrl) {
         this.title = title;
         this.location = location;
         this.endDate = endDate;
-        this.photoUrls = photoUrls;
+        this.photos = photos;
         this.coverImageUrl = coverImageUrl;
     }
 
@@ -37,8 +37,8 @@ public class CrowdEvent {
         return endDate;
     }
 
-    public Map getPhotoUrls(){
-        return photoUrls;
+    public Map getPhotos(){
+        return photos;
     }
 
     public String getCoverImageUrl(){

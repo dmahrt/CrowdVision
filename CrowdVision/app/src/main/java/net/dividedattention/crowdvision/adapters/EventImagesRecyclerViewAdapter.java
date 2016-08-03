@@ -3,8 +3,12 @@ package net.dividedattention.crowdvision.adapters;
 import android.content.Context;
 import android.support.v4.view.ViewCompat;
 import android.support.v7.widget.RecyclerView;
+import android.util.Log;
+import android.view.LayoutInflater;
 import android.view.View;
+import android.view.ViewGroup;
 import android.widget.ImageView;
+import android.widget.TextView;
 
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.load.engine.DiskCacheStrategy;
@@ -12,38 +16,66 @@ import com.firebase.ui.database.FirebaseRecyclerAdapter;
 import com.google.firebase.database.DatabaseReference;
 
 
+import net.dividedattention.crowdvision.Photo;
 import net.dividedattention.crowdvision.PhotoClickListener;
 import net.dividedattention.crowdvision.R;
+
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Created by drewmahrt on 5/11/16.
  */
-public class EventImagesRecyclerViewAdapter extends FirebaseRecyclerAdapter<String,EventImagesRecyclerViewAdapter.EventViewHolder> {
-    private Context mContext;
+public class EventImagesRecyclerViewAdapter extends RecyclerView.Adapter<EventImagesRecyclerViewAdapter.EventViewHolder> {
+    private static final String TAG = "RecyclerViewAdapter";
     private PhotoClickListener mListener;
+    private List<Photo> mItems;
+    private List<String> mKeys;
 
-    public EventImagesRecyclerViewAdapter(Class<String> modelClass, int modelLayout, Class<EventViewHolder> viewHolderClass, DatabaseReference ref, Context context, PhotoClickListener listener) {
-        super(modelClass, modelLayout, viewHolderClass, ref);
-        mContext = context;
+    public EventImagesRecyclerViewAdapter(List items, PhotoClickListener listener) {
         mListener = listener;
+        mItems = items;
+        mKeys = new ArrayList<>();
     }
 
 
+
+
     @Override
-    protected void populateViewHolder(final EventViewHolder eventViewHolder, String s, final int i) {
-        Glide.with(mContext)
-                .load(s)
-                .diskCacheStrategy(DiskCacheStrategy.ALL)
+    public EventViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
+        LayoutInflater inflater = LayoutInflater.from(parent.getContext());
+        return new EventViewHolder(inflater.inflate(R.layout.photo_layout,parent,false));
+    }
+
+    @Override
+    public void onBindViewHolder(final EventViewHolder eventViewHolder, final int position) {
+        Glide.with(eventViewHolder.imageView.getContext())
+                .load(mItems.get(position).getPhotoUrl())
                 .into(eventViewHolder.imageView);
 
-        ViewCompat.setTransitionName(eventViewHolder.imageView,i+"_image");
+
+        ViewCompat.setTransitionName(eventViewHolder.imageView,position+"_image");
 
         eventViewHolder.imageView.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                mListener.onPhotoClicked(eventViewHolder,i);
+                mListener.onPhotoClicked(eventViewHolder,position);
             }
         });
+    }
+
+    @Override
+    public int getItemCount() {
+        //Log.d(TAG, "getItemCount: "+mItems.size());
+        return mItems.size();
+    }
+
+    public void addKey(int i, String s) {
+        mKeys.add(i,s);
+    }
+
+    public String getKey(int i){
+        return mKeys.get(i);
     }
 
     public static class EventViewHolder extends RecyclerView.ViewHolder {

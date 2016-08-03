@@ -10,10 +10,12 @@ import android.net.Uri;
 import android.os.AsyncTask;
 import android.provider.MediaStore;
 import android.provider.Settings;
+import android.support.annotation.NonNull;
 import android.support.design.widget.Snackbar;
 import android.support.v7.app.ActionBar;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.DatePicker;
@@ -29,9 +31,16 @@ import com.amazonaws.regions.Region;
 import com.amazonaws.regions.Regions;
 import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.AmazonS3Client;
+import com.google.android.gms.tasks.OnFailureListener;
+import com.google.android.gms.tasks.OnSuccessListener;
+import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.storage.FirebaseStorage;
+import com.google.firebase.storage.StorageReference;
+import com.google.firebase.storage.UploadTask;
 
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
@@ -39,6 +48,7 @@ import java.io.IOException;
 import java.util.Calendar;
 
 public class CreateEventActivity extends AppCompatActivity implements DatePickerDialog.OnDateSetListener{
+    private static final String TAG = "CreateEventActivity";
     Button mEndDateButton, mSubmitButton, mChooseImageButton;
     EditText mTitleText, mLocationText;
     ProgressBar mProgressBar;
@@ -74,8 +84,9 @@ public class CreateEventActivity extends AppCompatActivity implements DatePicker
             @Override
             public void onClick(View v) {
                 if(checkEventData()){
-                    AmazonUploadTask task = new AmazonUploadTask();
-                    task.execute();
+                    uploadToFirebase();
+//                    AmazonUploadTask task = new AmazonUploadTask();
+//                    task.execute();
                 }
             }
         });
@@ -103,6 +114,54 @@ public class CreateEventActivity extends AppCompatActivity implements DatePicker
                 startActivityForResult(Intent.createChooser(intent, "Select Picture"), PICK_IMAGE_REQUEST);
             }
         });
+    }
+
+    private void uploadToFirebase() {
+        ByteArrayOutputStream baos = null;
+
+        try {
+            String fileName = "newImage.jpg";
+
+            File imageFile = new File(getFilesDir(), fileName);
+            Uri fileUri = Uri.fromFile(imageFile);
+            Bitmap selectedImage = MediaStore.Images.Media.getBitmap(getContentResolver(), fileUri);
+
+            FirebaseStorage storage = FirebaseStorage.getInstance();
+            StorageReference storageRef = storage.getReferenceFromUrl(getString(R.string.firebase_storage));
+            StorageReference spaceRef = storageRef.child("images/" + System.currentTimeMillis() + "_" + mSelectedImage.getByteCount() + ".jpg");
+
+            baos = new ByteArrayOutputStream();
+            mSelectedImage.compress(Bitmap.CompressFormat.JPEG, 30, baos);
+            final byte[] imageData = baos.toByteArray();
+
+            UploadTask uploadTask = spaceRef.putBytes(imageData);
+            uploadTask.addOnFailureListener(new OnFailureListener() {
+                @Override
+                public void onFailure(@NonNull Exception exception) {
+                    Toast.makeText(CreateEventActivity.this, "Image failed to upload", Toast.LENGTH_SHORT).show();
+                }
+            }).addOnSuccessListener(new OnSuccessListener<UploadTask.TaskSnapshot>() {
+                @Override
+                public void onSuccess(UploadTask.TaskSnapshot taskSnapshot) {
+                    // taskSnapshot.getMetadata() contains file metadata such as size, content-type, and download URL.
+                    Uri downloadUrl = taskSnapshot.getDownloadUrl();
+                    String imagePath = downloadUrl.toString();
+                    Log.d(TAG, "onSuccess: " + imagePath);
+
+                    CrowdEvent event = new CrowdEvent(mTitleText.getText().toString(),
+                            mLocationText.getText().toString(),
+                            mEndDate,
+                            null,
+                            imagePath);
+                    DatabaseReference subRef = mFirebaseRef.push();
+                    event.setKey(subRef.getKey());
+                    subRef.setValue(event);
+                    finish();
+                }
+            });
+        }catch (Exception e){
+            e.printStackTrace();
+        }
     }
 
     private boolean checkEventData(){
@@ -158,80 +217,114 @@ public class CreateEventActivity extends AppCompatActivity implements DatePicker
         }
     }
 
-    private class AmazonUploadTask extends AsyncTask<Void,Void,String>{
-        @Override
-        protected void onPreExecute() {
-            super.onPreExecute();
-            mProgressBar.setVisibility(View.VISIBLE);
-        }
-
-        @Override
-        protected String doInBackground(Void... params) {
-            String amazonFileName = "";
-            String identityPoolID = getString(R.string.identity_pool_id);
-
-            CognitoCachingCredentialsProvider credentialsProvider = new CognitoCachingCredentialsProvider(
-                    getApplicationContext(),    /* get the context for the application */
-                    identityPoolID,    /* Identity Pool ID */
-                    Regions.US_EAST_1           /* Region for your identity pool--US_EAST_1 or EU_WEST_1*/
-            );
-
-            // Create an S3 client
-            AmazonS3 s3 = new AmazonS3Client(credentialsProvider);
-
-            // Set the region of your S3 bucket
-            s3.setRegion(Region.getRegion(Regions.US_EAST_1));
-
-            TransferUtility transferUtility = new TransferUtility(s3, getApplicationContext());
-
-            FileOutputStream fop = null;
-
-            try {
-                String fileName = "newImage.jpg";
-
-                File imageFile = new File(getFilesDir(),fileName);
-                fop = new FileOutputStream(imageFile);
-                mSelectedImage.compress(Bitmap.CompressFormat.JPEG,30,fop);
-
-                amazonFileName = System.currentTimeMillis() + "_" + mSelectedImage.getByteCount()+".jpg";
-
-                TransferObserver observer = transferUtility.upload(
-                        "crowdvision",     /* The bucket to upload to */
-                        System.currentTimeMillis() + "_" + mSelectedImage.getByteCount()+".jpg",    /* The key for the uploaded object */
-                        imageFile        /* The file where the data to upload exists */
-                );
-
-
-
-            }catch (Exception e){
-                e.printStackTrace();
-            }finally {
-                try {
-                    if (fop != null) {
-                        fop.flush();
-                        fop.close();
-                    }
-                }catch(Exception e){
-                    e.printStackTrace();
-                }
-            }
-
-            return "https://s3.amazonaws.com/crowdvision/"+amazonFileName;
-        }
-
-        @Override
-        protected void onPostExecute(String s) {
-            super.onPostExecute(s);
-            CrowdEvent event = new CrowdEvent(mTitleText.getText().toString(),
-                    mLocationText.getText().toString(),
-                    mEndDate,
-                    null,
-                    s);
-            DatabaseReference subRef = mFirebaseRef.push();
-            event.setKey(subRef.getKey());
-            subRef.setValue(event);
-            mProgressBar.setVisibility(View.GONE);
-            finish();
-        }
-    }
+//    private class AmazonUploadTask extends AsyncTask<Void,Void,String>{
+//        @Override
+//        protected void onPreExecute() {
+//            super.onPreExecute();
+//            mProgressBar.setVisibility(View.VISIBLE);
+//        }
+//
+//        @Override
+//        protected String doInBackground(Void... params) {
+//            String amazonFileName = "";
+//            String identityPoolID = getString(R.string.identity_pool_id);
+//
+//            CognitoCachingCredentialsProvider credentialsProvider = new CognitoCachingCredentialsProvider(
+//                    getApplicationContext(),    /* get the context for the application */
+//                    identityPoolID,    /* Identity Pool ID */
+//                    Regions.US_EAST_1           /* Region for your identity pool--US_EAST_1 or EU_WEST_1*/
+//            );
+//
+//            // Create an S3 client
+//            AmazonS3 s3 = new AmazonS3Client(credentialsProvider);
+//
+//            // Set the region of your S3 bucket
+//            s3.setRegion(Region.getRegion(Regions.US_EAST_1));
+//
+//            TransferUtility transferUtility = new TransferUtility(s3, getApplicationContext());
+//
+//            FileOutputStream fop = null;
+//            ByteArrayOutputStream baos = null;
+//
+//            try {
+//                String fileName = "newImage.jpg";
+//
+//                Uri fileUri = Uri.fromFile(imageFile);
+//                Bitmap selectedImage = MediaStore.Images.Media.getBitmap(getActivity().getContentResolver(), fileUri);
+//
+//                amazonFileName = System.currentTimeMillis() + "_" + selectedImage.getByteCount()+".jpg";
+//
+//                FirebaseStorage storage = FirebaseStorage.getInstance();
+//                StorageReference storageRef = storage.getReferenceFromUrl(getString(R.string.firebase_storage));
+//                StorageReference imagesRef = storageRef.child("images");
+//                StorageReference spaceRef = storageRef.child("images/"+System.currentTimeMillis() + "_" + selectedImage.getByteCount()+".jpg");
+//
+//
+//                baos = new ByteArrayOutputStream();
+//                selectedImage.compress(Bitmap.CompressFormat.JPEG,30,baos);
+//                final byte[] imageData = baos.toByteArray();
+//
+//                UploadTask uploadTask = spaceRef.putBytes(imageData);
+//                uploadTask.addOnFailureListener(new OnFailureListener() {
+//                    @Override
+//                    public void onFailure(@NonNull Exception exception) {
+//                        Toast.makeText(getContext(), "Image failed to upload", Toast.LENGTH_SHORT).show();
+//                    }
+//                }).addOnSuccessListener(new OnSuccessListener<UploadTask.TaskSnapshot>() {
+//                    @Override
+//                    public void onSuccess(UploadTask.TaskSnapshot taskSnapshot) {
+//                        // taskSnapshot.getMetadata() contains file metadata such as size, content-type, and download URL.
+//                        Uri downloadUrl = taskSnapshot.getDownloadUrl();
+//                        String imagePath = downloadUrl.toString();
+//                        Log.d(TAG, "onSuccess: "+imagePath);
+//                        mFirebaseRef.push().setValue(imagePath);
+//                    }
+//                });
+//
+//
+////                File imageFile = new File(getFilesDir(),fileName);
+////                fop = new FileOutputStream(imageFile);
+////                mSelectedImage.compress(Bitmap.CompressFormat.JPEG,30,fop);
+////
+////                amazonFileName = System.currentTimeMillis() + "_" + mSelectedImage.getByteCount()+".jpg";
+////
+////                TransferObserver observer = transferUtility.upload(
+////                        "crowdvision",     /* The bucket to upload to */
+////                        System.currentTimeMillis() + "_" + mSelectedImage.getByteCount()+".jpg",    /* The key for the uploaded object */
+////                        imageFile        /* The file where the data to upload exists */
+////                );
+//
+//
+//
+//            }catch (Exception e){
+//                e.printStackTrace();
+//            }finally {
+//                try {
+//                    if (fop != null) {
+//                        fop.flush();
+//                        fop.close();
+//                    }
+//                }catch(Exception e){
+//                    e.printStackTrace();
+//                }
+//            }
+//
+//            return "https://s3.amazonaws.com/crowdvision/"+amazonFileName;
+//        }
+//
+//        @Override
+//        protected void onPostExecute(String s) {
+//            super.onPostExecute(s);
+//            CrowdEvent event = new CrowdEvent(mTitleText.getText().toString(),
+//                    mLocationText.getText().toString(),
+//                    mEndDate,
+//                    null,
+//                    s);
+//            DatabaseReference subRef = mFirebaseRef.push();
+//            event.setKey(subRef.getKey());
+//            subRef.setValue(event);
+//            mProgressBar.setVisibility(View.GONE);
+//            finish();
+//        }
+//    }
 }
