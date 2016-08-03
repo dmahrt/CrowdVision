@@ -168,10 +168,11 @@ public class CreateEventActivity extends AppCompatActivity implements DatePicker
         @Override
         protected String doInBackground(Void... params) {
             String amazonFileName = "";
+            String identityPoolID = getString(R.string.identity_pool_id);
 
             CognitoCachingCredentialsProvider credentialsProvider = new CognitoCachingCredentialsProvider(
                     getApplicationContext(),    /* get the context for the application */
-                    ,    /* Identity Pool ID */
+                    identityPoolID,    /* Identity Pool ID */
                     Regions.US_EAST_1           /* Region for your identity pool--US_EAST_1 or EU_WEST_1*/
             );
 

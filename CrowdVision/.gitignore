@@ -6,3 +6,6 @@
 .DS_Store
 /build
 /captures
+app/src/debug/res/values/api_keys.xml
+app/src/main/res/values/api_keys.xml
+app/src/release/res/values/api_keys.xml

@@ -22,10 +22,10 @@ public class EventImagesRecyclerViewAdapter extends FirebaseRecyclerAdapter<Stri
     private Context mContext;
     private PhotoClickListener mListener;
 
-    public EventImagesRecyclerViewAdapter(Class<String> modelClass, int modelLayout, Class<EventViewHolder> viewHolderClass, DatabaseReference ref, Context context) {
+    public EventImagesRecyclerViewAdapter(Class<String> modelClass, int modelLayout, Class<EventViewHolder> viewHolderClass, DatabaseReference ref, Context context, PhotoClickListener listener) {
         super(modelClass, modelLayout, viewHolderClass, ref);
         mContext = context;
-        mListener = (PhotoClickListener)mContext;
+        mListener = listener;
     }
 
 
