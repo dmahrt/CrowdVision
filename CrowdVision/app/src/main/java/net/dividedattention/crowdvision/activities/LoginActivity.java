@@ -24,6 +24,7 @@ public class LoginActivity extends AppCompatActivity {
             // already signed in
             Log.d(LoginActivity.class.getName(),"User already signed in");
             startActivity(new Intent(this, EventListActivity.class));
+            finish();
         } else {
             startActivityForResult(
                     AuthUI.getInstance(FirebaseApp.getInstance())

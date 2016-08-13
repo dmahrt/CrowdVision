@@ -13,6 +13,7 @@ import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
+import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.DatePicker;
 import android.widget.EditText;
@@ -123,6 +124,8 @@ public class CreateEventActivity extends AppCompatActivity implements DatePicker
             mSelectedImage.compress(Bitmap.CompressFormat.JPEG, 30, baos);
             final byte[] imageData = baos.toByteArray();
 
+            ProgressBar progressBar = (ProgressBar) findViewById(R.id.progressBar);
+            progressBar.setVisibility(View.VISIBLE);
             UploadTask uploadTask = spaceRef.putBytes(imageData);
             uploadTask.addOnFailureListener(new OnFailureListener() {
                 @Override

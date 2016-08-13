@@ -13,6 +13,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.database.DataSnapshot;
@@ -79,12 +80,34 @@ public class ExpandedPhotoFragment extends Fragment implements View.OnClickListe
         mFavImage.setOnClickListener(this);
         mLikesText = (TextView)view.findViewById(R.id.likes_text);
 
+
         DatabaseReference photoReference = FirebaseDatabase.getInstance().getReference().child(mPhotoPath);
-        photoReference.addListenerForSingleValueEvent(new ValueEventListener() {
+        photoReference.addValueEventListener(new ValueEventListener() {
             @Override
             public void onDataChange(DataSnapshot dataSnapshot) {
+                mPhotoLoaded = true;
                 mCurrentPhoto = dataSnapshot.getValue(Photo.class);
                 mLikesText.setText("Likes: "+mCurrentPhoto.getLikes());
+            }
+
+            @Override
+            public void onCancelled(DatabaseError databaseError) {
+
+            }
+        });
+
+        DatabaseReference userReference = FirebaseDatabase.getInstance().getReference().child("users/"+FirebaseAuth.getInstance().getCurrentUser().getUid());
+        userReference.addListenerForSingleValueEvent(new ValueEventListener() {
+            @Override
+            public void onDataChange(DataSnapshot dataSnapshot) {
+                mCurrentUser = dataSnapshot.getValue(User.class);
+                if(mCurrentUser == null){
+                    mCurrentUser = new User();
+                }
+                mUserLoaded = true;
+                if(mCurrentUser.getLikesList().contains(mPhotoKey)){
+                    mFavImage.setColorFilter(Color.argb(255,255,51,51));
+                }
             }
 
             @Override
@@ -110,41 +133,46 @@ public class ExpandedPhotoFragment extends Fragment implements View.OnClickListe
 
     private void pressFavorite() {
         Log.d(TAG, "pressFavorite: ");
-        DatabaseReference userReference = FirebaseDatabase.getInstance().getReference().child("users/"+FirebaseAuth.getInstance().getCurrentUser().getUid());
-        userReference.addListenerForSingleValueEvent(new ValueEventListener() {
-            @Override
-            public void onDataChange(DataSnapshot dataSnapshot) {
-                mCurrentUser = dataSnapshot.getValue(User.class);
-                if(mCurrentUser == null){
-                    mCurrentUser = new User();
-                }
-                mUserLoaded = true;
-                if(mPhotoLoaded && mUserLoaded)
-                    toggleLike();
-            }
-
-            @Override
-            public void onCancelled(DatabaseError databaseError) {
-
-            }
-        });
-
-        DatabaseReference photoReference = FirebaseDatabase.getInstance().getReference().child(mPhotoPath);
-        photoReference.addListenerForSingleValueEvent(new ValueEventListener() {
-            @Override
-            public void onDataChange(DataSnapshot dataSnapshot) {
-                if(mCurrentPhoto == null)
-                    mCurrentPhoto = dataSnapshot.getValue(Photo.class);
-                mPhotoLoaded = true;
-                if(mPhotoLoaded && mUserLoaded)
-                    toggleLike();
-            }
-
-            @Override
-            public void onCancelled(DatabaseError databaseError) {
-
-            }
-        });
+        if(mPhotoLoaded && mUserLoaded) {
+            toggleLike();
+        }else{
+            Toast.makeText(getContext(), "Sorry, something went wrong!", Toast.LENGTH_SHORT).show();
+        }
+//        DatabaseReference userReference = FirebaseDatabase.getInstance().getReference().child("users/"+FirebaseAuth.getInstance().getCurrentUser().getUid());
+//        userReference.addListenerForSingleValueEvent(new ValueEventListener() {
+//            @Override
+//            public void onDataChange(DataSnapshot dataSnapshot) {
+//                mCurrentUser = dataSnapshot.getValue(User.class);
+//                if(mCurrentUser == null){
+//                    mCurrentUser = new User();
+//                }
+//                mUserLoaded = true;
+//                if(mPhotoLoaded && mUserLoaded)
+//                    toggleLike();
+//            }
+//
+//            @Override
+//            public void onCancelled(DatabaseError databaseError) {
+//
+//            }
+//        });
+//
+//        DatabaseReference photoReference = FirebaseDatabase.getInstance().getReference().child(mPhotoPath);
+//        photoReference.addListenerForSingleValueEvent(new ValueEventListener() {
+//            @Override
+//            public void onDataChange(DataSnapshot dataSnapshot) {
+//                if(mCurrentPhoto == null)
+//                    mCurrentPhoto = dataSnapshot.getValue(Photo.class);
+//                mPhotoLoaded = true;
+//                if(mPhotoLoaded && mUserLoaded)
+//                    toggleLike();
+//            }
+//
+//            @Override
+//            public void onCancelled(DatabaseError databaseError) {
+//
+//            }
+//        });
     }
 
     private void toggleLike() {
@@ -161,7 +189,7 @@ public class ExpandedPhotoFragment extends Fragment implements View.OnClickListe
                 //User hasn't liked this photo yet
                 Log.d(TAG, "toggleLike: User didn't have photo key: "+mPhotoKey);
                 mCurrentPhoto.setLikes(mCurrentPhoto.getLikes()+1);
-                mCurrentUser.likesList.add(mPhotoKey);
+                mCurrentUser.getLikesList().add(mPhotoKey);
                 mFavImage.setColorFilter(Color.argb(255,255,51,51));
             }
 
@@ -170,8 +198,8 @@ public class ExpandedPhotoFragment extends Fragment implements View.OnClickListe
             userReference.setValue(mCurrentUser);
             photoReference.setValue(mCurrentPhoto);
             mLikesText.setText("Likes: "+mCurrentPhoto.getLikes());
-            mPhotoLoaded = false;
-            mUserLoaded = false;
+//            mPhotoLoaded = false;
+//            mUserLoaded = false;
         }
     }
 
