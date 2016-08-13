@@ -1,4 +1,4 @@
-package net.dividedattention.crowdvision;
+package net.dividedattention.crowdvision.services;
 
 import android.app.NotificationManager;
 import android.app.PendingIntent;
@@ -11,6 +11,8 @@ import android.util.Log;
 
 import com.google.firebase.messaging.FirebaseMessagingService;
 import com.google.firebase.messaging.RemoteMessage;
+
+import net.dividedattention.crowdvision.activities.CreateEventActivity;
 
 /**
  * Created by drewmahrt on 7/28/16.

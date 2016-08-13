@@ -1,23 +1,16 @@
 package net.dividedattention.crowdvision.adapters;
 
-import android.content.Context;
 import android.support.v4.view.ViewCompat;
 import android.support.v7.widget.RecyclerView;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
-import android.widget.TextView;
 
 import com.bumptech.glide.Glide;
-import com.bumptech.glide.load.engine.DiskCacheStrategy;
-import com.firebase.ui.database.FirebaseRecyclerAdapter;
-import com.google.firebase.database.DatabaseReference;
 
 
-import net.dividedattention.crowdvision.Photo;
-import net.dividedattention.crowdvision.PhotoClickListener;
+import net.dividedattention.crowdvision.models.Photo;
 import net.dividedattention.crowdvision.R;
 
 import java.util.ArrayList;

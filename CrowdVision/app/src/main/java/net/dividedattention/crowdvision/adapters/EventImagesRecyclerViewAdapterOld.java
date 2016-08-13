@@ -12,7 +12,6 @@ import com.firebase.ui.database.FirebaseRecyclerAdapter;
 import com.google.firebase.database.DatabaseReference;
 
 
-import net.dividedattention.crowdvision.PhotoClickListener;
 import net.dividedattention.crowdvision.R;
 
 /**

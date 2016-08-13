@@ -1,4 +1,4 @@
-package net.dividedattention.crowdvision;
+package net.dividedattention.crowdvision.transitions;
 
 import android.annotation.TargetApi;
 import android.content.Context;

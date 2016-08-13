@@ -1,4 +1,6 @@
-package net.dividedattention.crowdvision;
+package net.dividedattention.crowdvision.models;
+
+import net.dividedattention.crowdvision.models.Photo;
 
 import java.util.Map;
 

@@ -6,7 +6,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:fitsSystemWindows="true"
-    tools:context="net.dividedattention.crowdvision.EventPhotosActivity">
+    tools:context="net.dividedattention.crowdvision.activities.EventPhotosActivity">
     <FrameLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent"

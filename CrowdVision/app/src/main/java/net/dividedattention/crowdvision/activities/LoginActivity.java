@@ -1,6 +1,5 @@
-package net.dividedattention.crowdvision;
+package net.dividedattention.crowdvision.activities;
 
-import android.app.usage.UsageEvents;
 import android.content.Intent;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
@@ -9,8 +8,8 @@ import android.util.Log;
 import com.firebase.ui.auth.AuthUI;
 import com.google.firebase.FirebaseApp;
 import com.google.firebase.auth.FirebaseAuth;
-import com.google.firebase.database.DatabaseReference;
-import com.google.firebase.database.FirebaseDatabase;
+
+import net.dividedattention.crowdvision.R;
 
 public class LoginActivity extends AppCompatActivity {
     private static final int RC_SIGN_IN = 20;

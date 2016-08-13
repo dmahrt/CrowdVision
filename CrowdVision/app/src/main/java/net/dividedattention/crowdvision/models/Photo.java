@@ -1,4 +1,4 @@
-package net.dividedattention.crowdvision;
+package net.dividedattention.crowdvision.models;
 
 /**
  * Created by drewmahrt on 8/3/16.

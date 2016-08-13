@@ -17,9 +17,8 @@ import com.firebase.ui.database.FirebaseRecyclerAdapter;
 import com.google.firebase.database.DatabaseReference;
 
 
-import net.dividedattention.crowdvision.CrowdEvent;
-import net.dividedattention.crowdvision.EventListActivity;
-import net.dividedattention.crowdvision.EventPhotosActivity;
+import net.dividedattention.crowdvision.models.CrowdEvent;
+import net.dividedattention.crowdvision.activities.EventPhotosActivity;
 import net.dividedattention.crowdvision.R;
 
 /**

@@ -1,4 +1,4 @@
-package net.dividedattention.crowdvision;
+package net.dividedattention.crowdvision.fragments;
 
 
 import android.graphics.Bitmap;
@@ -8,22 +8,22 @@ import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
 import android.util.Log;
-import android.view.KeyEvent;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import com.google.firebase.auth.FirebaseAuth;
-import com.google.firebase.database.ChildEventListener;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
-import com.google.firebase.database.Query;
 import com.google.firebase.database.ValueEventListener;
+
+import net.dividedattention.crowdvision.R;
+import net.dividedattention.crowdvision.models.Photo;
+import net.dividedattention.crowdvision.models.User;
 
 /**
  * Created by drewmahrt on 7/29/16.
@@ -155,7 +155,7 @@ public class ExpandedPhotoFragment extends Fragment implements View.OnClickListe
                 //User has already liked this photo
                 Log.d(TAG,"User contained photo key "+mPhotoKey);
                 mCurrentPhoto.setLikes(mCurrentPhoto.getLikes()-1);
-                mCurrentUser.likesList.remove(mPhotoKey);
+                mCurrentUser.getLikesList().remove(mPhotoKey);
                 mFavImage.setColorFilter(Color.argb(255,0,0,0));
             }else{
                 //User hasn't liked this photo yet

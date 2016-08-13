@@ -1,4 +1,4 @@
-package net.dividedattention.crowdvision;
+package net.dividedattention.crowdvision.models;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -7,7 +7,7 @@ import java.util.List;
  * Created by drewmahrt on 8/3/16.
  */
 public class User {
-    List<String> likesList;
+    private List<String> likesList;
 
     public User(List<String> likesList) {
         this.likesList = likesList;

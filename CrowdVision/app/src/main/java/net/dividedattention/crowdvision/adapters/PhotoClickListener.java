@@ -1,4 +1,4 @@
-package net.dividedattention.crowdvision;
+package net.dividedattention.crowdvision.adapters;
 
 import net.dividedattention.crowdvision.adapters.EventImagesRecyclerViewAdapter;
 

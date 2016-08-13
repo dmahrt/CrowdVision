@@ -1,4 +1,4 @@
-package net.dividedattention.crowdvision;
+package net.dividedattention.crowdvision.fragments;
 
 import android.app.Activity;
 import android.content.Intent;
@@ -11,7 +11,6 @@ import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.design.widget.FloatingActionButton;
 import android.support.v4.app.Fragment;
-import android.support.v4.app.FragmentTransaction;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
@@ -25,7 +24,6 @@ import android.view.ViewGroup;
 import android.widget.Toast;
 
 import com.amazonaws.auth.CognitoCachingCredentialsProvider;
-import com.amazonaws.mobileconnectors.s3.transferutility.TransferObserver;
 import com.amazonaws.mobileconnectors.s3.transferutility.TransferUtility;
 import com.amazonaws.regions.Region;
 import com.amazonaws.regions.Regions;
@@ -43,19 +41,21 @@ import com.google.firebase.storage.FirebaseStorage;
 import com.google.firebase.storage.StorageReference;
 import com.google.firebase.storage.UploadTask;
 
+import net.dividedattention.crowdvision.adapters.PhotoClickListener;
+import net.dividedattention.crowdvision.R;
 import net.dividedattention.crowdvision.adapters.EventImagesRecyclerViewAdapter;
+import net.dividedattention.crowdvision.models.Photo;
+import net.dividedattention.crowdvision.transitions.ExpandedPhotoTransition;
 
 import java.io.ByteArrayOutputStream;
 import java.io.File;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.List;
 
 /**
  * Created by drewmahrt on 7/29/16.
  */
-public class PhotoDisplayFragment extends Fragment implements PhotoClickListener{
+public class PhotoDisplayFragment extends Fragment implements PhotoClickListener {
     private static final String TAG = "PhotoDisplayFragment";
     public static final String EVENT_KEY = "eventKey";
     public static final String EVENT_TITLE = "eventTitle";
