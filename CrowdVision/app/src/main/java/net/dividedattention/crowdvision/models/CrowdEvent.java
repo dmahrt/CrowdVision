@@ -10,12 +10,14 @@ import java.util.Map;
 public class CrowdEvent {
     private String title;
     private String location;
+    private String city;
+    private String state;
     private String endDate;
     private String coverImageUrl;
     private Map<String,Photo> photos;
     private String key;
 
-    public CrowdEvent(String title, String location, String endDate, Map<String,Photo> photos, String coverImageUrl) {
+    public CrowdEvent(String title, String location, String city, String state, String endDate, Map<String,Photo> photos, String coverImageUrl) {
         this.title = title;
         this.location = location;
         this.endDate = endDate;
@@ -25,6 +27,22 @@ public class CrowdEvent {
 
     public CrowdEvent() {
 
+    }
+
+    public String getCity() {
+        return city;
+    }
+
+    public void setCity(String city) {
+        this.city = city;
+    }
+
+    public String getState() {
+        return state;
+    }
+
+    public void setState(String state) {
+        this.state = state;
     }
 
     public String getTitle() {

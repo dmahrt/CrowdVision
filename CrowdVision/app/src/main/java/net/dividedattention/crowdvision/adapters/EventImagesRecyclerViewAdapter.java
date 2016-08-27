@@ -19,7 +19,7 @@ import java.util.List;
 /**
  * Created by drewmahrt on 5/11/16.
  */
-public class EventImagesRecyclerViewAdapter extends RecyclerView.Adapter<EventImagesRecyclerViewAdapter.EventViewHolder> {
+public class EventImagesRecyclerViewAdapter extends RecyclerView.Adapter<EventImagesRecyclerViewAdapter.ImageViewHolder> {
     private static final String TAG = "RecyclerViewAdapter";
     private PhotoClickListener mListener;
     private List<Photo> mItems;
@@ -35,13 +35,13 @@ public class EventImagesRecyclerViewAdapter extends RecyclerView.Adapter<EventIm
 
 
     @Override
-    public EventViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
+    public ImageViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
         LayoutInflater inflater = LayoutInflater.from(parent.getContext());
-        return new EventViewHolder(inflater.inflate(R.layout.photo_layout,parent,false));
+        return new ImageViewHolder(inflater.inflate(R.layout.photo_layout,parent,false));
     }
 
     @Override
-    public void onBindViewHolder(final EventViewHolder eventViewHolder, final int position) {
+    public void onBindViewHolder(final ImageViewHolder eventViewHolder, final int position) {
         Glide.with(eventViewHolder.imageView.getContext())
                 .load(mItems.get(position).getPhotoUrl())
                 .into(eventViewHolder.imageView);
@@ -71,10 +71,10 @@ public class EventImagesRecyclerViewAdapter extends RecyclerView.Adapter<EventIm
         return mKeys.get(i);
     }
 
-    public static class EventViewHolder extends RecyclerView.ViewHolder {
+    public static class ImageViewHolder extends RecyclerView.ViewHolder {
         public ImageView imageView;
 
-        public EventViewHolder(View itemView) {
+        public ImageViewHolder(View itemView) {
             super(itemView);
             imageView = (ImageView)itemView.findViewById(R.id.image);
         }

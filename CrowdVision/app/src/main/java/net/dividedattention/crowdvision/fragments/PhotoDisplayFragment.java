@@ -232,19 +232,6 @@ public class PhotoDisplayFragment extends Fragment implements PhotoClickListener
                         }
                     });
 
-
-                    //AMAZON STUFF BELOW
-
-
-
-//                    TransferObserver observer = transferUtility.upload(
-//                            "crowdvision",     /* The bucket to upload to */
-//                            System.currentTimeMillis() + "_" + selectedImage.getByteCount()+".jpg",    /* The key for the uploaded object */
-//                            imageFile        /* The file where the data to upload exists */
-//                    );
-//
-//                    mFirebaseRef.push().setValue("https://s3.amazonaws.com/crowdvision/"+amazonFileName);
-
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
@@ -252,12 +239,12 @@ public class PhotoDisplayFragment extends Fragment implements PhotoClickListener
         }
     }
 
-
-
     @Override
-    public void onPhotoClicked(EventImagesRecyclerViewAdapter.EventViewHolder viewHolder, int position) {
+    public void onPhotoClicked(RecyclerView.ViewHolder viewHolder, int position) {
+        EventImagesRecyclerViewAdapter.ImageViewHolder imageViewHolder = (EventImagesRecyclerViewAdapter.ImageViewHolder)viewHolder;
+
         Log.d(TAG, "onPhotoClicked: position "+position+" "+mAdapter.getKey(position));
-        ExpandedPhotoFragment fragment = ExpandedPhotoFragment.newInstance(((GlideBitmapDrawable)viewHolder.imageView.getDrawable()).getBitmap(),
+        ExpandedPhotoFragment fragment = ExpandedPhotoFragment.newInstance(((GlideBitmapDrawable)imageViewHolder.imageView.getDrawable()).getBitmap(),
                 position+"_image","events/"+getArguments().getString(EVENT_KEY)+"/photos/"+mAdapter.getKey(position));
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
             fragment.setSharedElementEnterTransition(new ExpandedPhotoTransition());
@@ -268,10 +255,9 @@ public class PhotoDisplayFragment extends Fragment implements PhotoClickListener
 
         getActivity().getSupportFragmentManager()
                 .beginTransaction()
-                .addSharedElement(viewHolder.imageView, position+"_image")
+                .addSharedElement(imageViewHolder.imageView, position+"_image")
                 .replace(R.id.container, fragment)
                 .addToBackStack(null)
                 .commit();
-
     }
 }

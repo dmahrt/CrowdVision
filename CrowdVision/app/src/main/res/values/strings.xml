@@ -5,4 +5,7 @@
     <string name="create_event_activity_title">Create Event</string>
     <string name="event_list_activity_title">Event List</string>
     <string name="title_activity_event_photos">EventPhotosActivity</string>
+    <string name="location_deny_message">You won\'t be able to post photos without your location. Please change this in your app settings if you change your mind.</string>
+    <string name="login">Login</string>
+    <string name="location_button">Select Location</string>
 </resources>

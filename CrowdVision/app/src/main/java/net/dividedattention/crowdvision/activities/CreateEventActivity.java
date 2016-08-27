@@ -4,10 +4,13 @@ import android.app.DatePickerDialog;
 import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.Color;
+import android.location.Location;
 import android.net.Uri;
+import android.os.Handler;
 import android.provider.MediaStore;
 import android.support.annotation.NonNull;
 import android.support.design.widget.Snackbar;
+import android.support.v4.os.ResultReceiver;
 import android.support.v7.app.ActionBar;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
@@ -19,8 +22,13 @@ import android.widget.DatePicker;
 import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.ProgressBar;
+import android.widget.TextView;
 import android.widget.Toast;
 
+import com.google.android.gms.common.GooglePlayServicesNotAvailableException;
+import com.google.android.gms.common.GooglePlayServicesRepairableException;
+import com.google.android.gms.location.places.Place;
+import com.google.android.gms.location.places.ui.PlacePicker;
 import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.firebase.database.DatabaseReference;
@@ -29,8 +37,10 @@ import com.google.firebase.storage.FirebaseStorage;
 import com.google.firebase.storage.StorageReference;
 import com.google.firebase.storage.UploadTask;
 
+import net.dividedattention.crowdvision.AddressServiceConstants;
 import net.dividedattention.crowdvision.models.CrowdEvent;
 import net.dividedattention.crowdvision.R;
+import net.dividedattention.crowdvision.services.FetchAddressIntentService;
 
 import java.io.ByteArrayOutputStream;
 import java.io.File;
@@ -39,15 +49,21 @@ import java.util.Calendar;
 
 public class CreateEventActivity extends AppCompatActivity implements DatePickerDialog.OnDateSetListener{
     private static final String TAG = "CreateEventActivity";
-    Button mEndDateButton, mSubmitButton, mChooseImageButton;
-    EditText mTitleText, mLocationText;
+    private static final int PLACE_PICKER_REQUEST = 0;
+    Button mEndDateButton, mSubmitButton, mChooseImageButton, mLocationButton;
+    EditText mTitleText;
+    TextView mLocationText;
     ProgressBar mProgressBar;
     ImageView mEventImageView;
     String mEndDate;
     Bitmap mSelectedImage;
     DatabaseReference mFirebaseRef;
+    private AddressResultReceiver mResultReceiver;
+
 
     private int PICK_IMAGE_REQUEST = 1;
+
+    private String mCity, mState, mLocationName;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -60,9 +76,10 @@ public class CreateEventActivity extends AppCompatActivity implements DatePicker
         mEndDateButton = (Button)findViewById(R.id.end_date_button);
         mSubmitButton = (Button)findViewById(R.id.submit_button);
         mChooseImageButton = (Button)findViewById(R.id.choose_image_button);
+        mLocationButton = (Button)findViewById(R.id.location_button);
 
         mTitleText = (EditText)findViewById(R.id.input_title);
-        mLocationText = (EditText)findViewById(R.id.input_location);
+        mLocationText = (TextView) findViewById(R.id.location_text);
 
         mEventImageView = (ImageView)findViewById(R.id.event_image);
 
@@ -75,8 +92,6 @@ public class CreateEventActivity extends AppCompatActivity implements DatePicker
             public void onClick(View v) {
                 if(checkEventData()){
                     uploadToFirebase();
-//                    AmazonUploadTask task = new AmazonUploadTask();
-//                    task.execute();
                 }
             }
         });
@@ -104,18 +119,26 @@ public class CreateEventActivity extends AppCompatActivity implements DatePicker
                 startActivityForResult(Intent.createChooser(intent, "Select Picture"), PICK_IMAGE_REQUEST);
             }
         });
+
+        mLocationButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                try {
+                    PlacePicker.IntentBuilder builder = new PlacePicker.IntentBuilder();
+                    startActivityForResult(builder.build(CreateEventActivity.this), PLACE_PICKER_REQUEST);
+                } catch (GooglePlayServicesRepairableException e) {
+                    e.printStackTrace();
+                } catch (GooglePlayServicesNotAvailableException e) {
+                    e.printStackTrace();
+                }
+            }
+        });
     }
 
     private void uploadToFirebase() {
         ByteArrayOutputStream baos = null;
 
         try {
-            String fileName = "newImage.jpg";
-
-            File imageFile = new File(getFilesDir(), fileName);
-            Uri fileUri = Uri.fromFile(imageFile);
-            Bitmap selectedImage = MediaStore.Images.Media.getBitmap(getContentResolver(), fileUri);
-
             FirebaseStorage storage = FirebaseStorage.getInstance();
             StorageReference storageRef = storage.getReferenceFromUrl(getString(R.string.firebase_storage));
             StorageReference spaceRef = storageRef.child("images/" + System.currentTimeMillis() + "_" + mSelectedImage.getByteCount() + ".jpg");
@@ -141,7 +164,9 @@ public class CreateEventActivity extends AppCompatActivity implements DatePicker
                     Log.d(TAG, "onSuccess: " + imagePath);
 
                     CrowdEvent event = new CrowdEvent(mTitleText.getText().toString(),
-                            mLocationText.getText().toString(),
+                            mLocationName,
+                            mCity,
+                            mState,
                             mEndDate,
                             null,
                             imagePath);
@@ -163,8 +188,9 @@ public class CreateEventActivity extends AppCompatActivity implements DatePicker
             isValid = false;
         }
 
-        if(mLocationText.getText().toString().length() == 0){
-            mLocationText.setError("Location is required");
+        if(mLocationName == null || mCity == null || mState == null){
+            Log.e(TAG, "checkEventData: "+mLocationName+", "+mCity+", "+mState);
+            mLocationButton.setError("Location is required");
             isValid = false;
         }
 
@@ -190,8 +216,8 @@ public class CreateEventActivity extends AppCompatActivity implements DatePicker
 
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
-        if(resultCode == RESULT_OK){
-            if(requestCode == PICK_IMAGE_REQUEST){
+        if(requestCode == PICK_IMAGE_REQUEST){
+            if(resultCode == RESULT_OK){
                 Uri uri = data.getData();
 
                 try {
@@ -207,116 +233,48 @@ public class CreateEventActivity extends AppCompatActivity implements DatePicker
                 }
             }
         }
+
+        if (requestCode == PLACE_PICKER_REQUEST) {
+            if (resultCode == RESULT_OK) {
+                TextView textView = (TextView) findViewById(R.id.location_text);
+                Place place = PlacePicker.getPlace(this, data);
+                mLocationName = place.getName().toString();
+                textView.setText(mLocationName);
+
+
+                Location location = new Location("");
+                location.setLatitude(place.getLatLng().latitude);
+                location.setLongitude(place.getLatLng().longitude);
+                startIntentService(location);
+
+            }
+        }
     }
 
-//    private class AmazonUploadTask extends AsyncTask<Void,Void,String>{
-//        @Override
-//        protected void onPreExecute() {
-//            super.onPreExecute();
-//            mProgressBar.setVisibility(View.VISIBLE);
-//        }
-//
-//        @Override
-//        protected String doInBackground(Void... params) {
-//            String amazonFileName = "";
-//            String identityPoolID = getString(R.string.identity_pool_id);
-//
-//            CognitoCachingCredentialsProvider credentialsProvider = new CognitoCachingCredentialsProvider(
-//                    getApplicationContext(),    /* get the context for the application */
-//                    identityPoolID,    /* Identity Pool ID */
-//                    Regions.US_EAST_1           /* Region for your identity pool--US_EAST_1 or EU_WEST_1*/
-//            );
-//
-//            // Create an S3 client
-//            AmazonS3 s3 = new AmazonS3Client(credentialsProvider);
-//
-//            // Set the region of your S3 bucket
-//            s3.setRegion(Region.getRegion(Regions.US_EAST_1));
-//
-//            TransferUtility transferUtility = new TransferUtility(s3, getApplicationContext());
-//
-//            FileOutputStream fop = null;
-//            ByteArrayOutputStream baos = null;
-//
-//            try {
-//                String fileName = "newImage.jpg";
-//
-//                Uri fileUri = Uri.fromFile(imageFile);
-//                Bitmap selectedImage = MediaStore.Images.Media.getBitmap(getActivity().getContentResolver(), fileUri);
-//
-//                amazonFileName = System.currentTimeMillis() + "_" + selectedImage.getByteCount()+".jpg";
-//
-//                FirebaseStorage storage = FirebaseStorage.getInstance();
-//                StorageReference storageRef = storage.getReferenceFromUrl(getString(R.string.firebase_storage));
-//                StorageReference imagesRef = storageRef.child("images");
-//                StorageReference spaceRef = storageRef.child("images/"+System.currentTimeMillis() + "_" + selectedImage.getByteCount()+".jpg");
-//
-//
-//                baos = new ByteArrayOutputStream();
-//                selectedImage.compress(Bitmap.CompressFormat.JPEG,30,baos);
-//                final byte[] imageData = baos.toByteArray();
-//
-//                UploadTask uploadTask = spaceRef.putBytes(imageData);
-//                uploadTask.addOnFailureListener(new OnFailureListener() {
-//                    @Override
-//                    public void onFailure(@NonNull Exception exception) {
-//                        Toast.makeText(getContext(), "Image failed to upload", Toast.LENGTH_SHORT).show();
-//                    }
-//                }).addOnSuccessListener(new OnSuccessListener<UploadTask.TaskSnapshot>() {
-//                    @Override
-//                    public void onSuccess(UploadTask.TaskSnapshot taskSnapshot) {
-//                        // taskSnapshot.getMetadata() contains file metadata such as size, content-type, and download URL.
-//                        Uri downloadUrl = taskSnapshot.getDownloadUrl();
-//                        String imagePath = downloadUrl.toString();
-//                        Log.d(TAG, "onSuccess: "+imagePath);
-//                        mFirebaseRef.push().setValue(imagePath);
-//                    }
-//                });
-//
-//
-////                File imageFile = new File(getFilesDir(),fileName);
-////                fop = new FileOutputStream(imageFile);
-////                mSelectedImage.compress(Bitmap.CompressFormat.JPEG,30,fop);
-////
-////                amazonFileName = System.currentTimeMillis() + "_" + mSelectedImage.getByteCount()+".jpg";
-////
-////                TransferObserver observer = transferUtility.upload(
-////                        "crowdvision",     /* The bucket to upload to */
-////                        System.currentTimeMillis() + "_" + mSelectedImage.getByteCount()+".jpg",    /* The key for the uploaded object */
-////                        imageFile        /* The file where the data to upload exists */
-////                );
-//
-//
-//
-//            }catch (Exception e){
-//                e.printStackTrace();
-//            }finally {
-//                try {
-//                    if (fop != null) {
-//                        fop.flush();
-//                        fop.close();
-//                    }
-//                }catch(Exception e){
-//                    e.printStackTrace();
-//                }
-//            }
-//
-//            return "https://s3.amazonaws.com/crowdvision/"+amazonFileName;
-//        }
-//
-//        @Override
-//        protected void onPostExecute(String s) {
-//            super.onPostExecute(s);
-//            CrowdEvent event = new CrowdEvent(mTitleText.getText().toString(),
-//                    mLocationText.getText().toString(),
-//                    mEndDate,
-//                    null,
-//                    s);
-//            DatabaseReference subRef = mFirebaseRef.push();
-//            event.setKey(subRef.getKey());
-//            subRef.setValue(event);
-//            mProgressBar.setVisibility(View.GONE);
-//            finish();
-//        }
-//    }
+    class AddressResultReceiver extends ResultReceiver {
+        public AddressResultReceiver(Handler handler) {
+            super(handler);
+        }
+
+        @Override
+        protected void onReceiveResult(int resultCode, Bundle resultData) {
+
+            // Display the address string
+            // or an error message sent from the intent service.
+            if(resultCode == AddressServiceConstants.SUCCESS_RESULT) {
+                mCity = resultData.getString(AddressServiceConstants.RESULT_DATA_CITY);
+                mState = resultData.getString(AddressServiceConstants.RESULT_DATA_STATE);
+            }else{
+                Toast.makeText(CreateEventActivity.this,"Error finding address",Toast.LENGTH_LONG).show();
+            }
+        }
+    }
+
+    protected void startIntentService(Location location) {
+        mResultReceiver = new AddressResultReceiver(new Handler());
+        Intent intent = new Intent(this, FetchAddressIntentService.class);
+        intent.putExtra(AddressServiceConstants.RECEIVER, mResultReceiver);
+        intent.putExtra(AddressServiceConstants.LOCATION_DATA_EXTRA, location);
+        startService(intent);
+    }
 }

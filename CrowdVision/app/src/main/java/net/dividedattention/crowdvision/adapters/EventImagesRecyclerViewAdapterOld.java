@@ -40,7 +40,7 @@ public class EventImagesRecyclerViewAdapterOld extends FirebaseRecyclerAdapter<S
         eventViewHolder.imageView.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                //mListener.onPhotoClicked(eventViewHolder,i);
+                mListener.onPhotoClicked(eventViewHolder,i);
             }
         });
     }

@@ -2,6 +2,7 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="net.dividedattention.crowdvision">
 
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION"/>
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
 
@@ -26,10 +27,6 @@
 
         <activity android:name=".activities.CreateEventActivity" />
 
-        <service
-            android:name="com.amazonaws.mobileconnectors.s3.transferutility.TransferService"
-            android:enabled="true" />
-
         <activity
             android:name=".activities.EventPhotosActivity"
             android:label="@string/title_activity_event_photos"
@@ -48,6 +45,17 @@
                 <action android:name="com.google.firebase.MESSAGING_EVENT"/>
             </intent-filter>
         </service>
+
+        <meta-data
+            android:name="com.google.android.awareness.API_KEY"
+            android:value="AIzaSyAUhfOj1jsV1PGvtM3uvW1aG7RSjZHfkmg"/>
+        <meta-data
+            android:name="com.google.android.geo.API_KEY"
+            android:value="AIzaSyAUhfOj1jsV1PGvtM3uvW1aG7RSjZHfkmg" />
+
+        <service
+            android:name=".services.FetchAddressIntentService"
+            android:exported="false"/>
     </application>
 
 </manifest>

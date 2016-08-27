@@ -34,26 +34,31 @@
 
         </android.support.design.widget.TextInputLayout>
 
-        <android.support.design.widget.TextInputLayout
-            android:id="@+id/input_layout_location"
+        <LinearLayout
+            android:id="@+id/layout_location"
+            android:orientation="horizontal"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_below="@id/input_layout_title">
 
-            <android.support.design.widget.TextInputEditText
-                android:id="@+id/input_location"
-                android:layout_width="match_parent"
+            <Button
+                android:id="@+id/location_button"
+                android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:hint="Event Location" />
+                android:text="@string/location_button" />
+            <TextView
+                android:id="@+id/location_text"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content" />
 
-        </android.support.design.widget.TextInputLayout>
+        </LinearLayout>
 
         <Button
             android:id="@+id/end_date_button"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="Choose End Date"
-            android:layout_below="@id/input_layout_location"
+            android:layout_below="@id/layout_location"
             android:layout_marginBottom="5dp"/>
 
         <Button
