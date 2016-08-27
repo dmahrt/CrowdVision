@@ -57,7 +57,6 @@ public class LoginActivity extends AppCompatActivity implements View.OnClickList
                             AuthUI.getInstance(FirebaseApp.getInstance())
                                     .createSignInIntentBuilder()
                                     .setProviders(AuthUI.FACEBOOK_PROVIDER)
-                                    .setProviders(AuthUI.EMAIL_PROVIDER)
                                     .build(),
                             RC_SIGN_IN);
                 }

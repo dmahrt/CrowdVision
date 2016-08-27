@@ -23,6 +23,8 @@ public class CrowdEvent {
         this.endDate = endDate;
         this.photos = photos;
         this.coverImageUrl = coverImageUrl;
+        this.state = state;
+        this.city = city;
     }
 
     public CrowdEvent() {
