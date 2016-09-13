@@ -71,6 +71,8 @@ public class EventImagesRecyclerViewAdapter extends RecyclerView.Adapter<EventIm
         return mKeys.get(i);
     }
 
+    public void removeKey(int i){ mKeys.remove(i); }
+
     public static class ImageViewHolder extends RecyclerView.ViewHolder {
         public ImageView imageView;
 

@@ -107,7 +107,7 @@ public class PhotoDisplayFragment extends Fragment implements PhotoClickListener
         StaggeredGridLayoutManager staggeredGridLayoutManager = new StaggeredGridLayoutManager(2, StaggeredGridLayoutManager.VERTICAL);
         LinearLayoutManager linearLayoutManager = new LinearLayoutManager(getContext());
         mRecyclerView.setHasFixedSize(true);
-        mRecyclerView.setLayoutManager(linearLayoutManager);
+        mRecyclerView.setLayoutManager(staggeredGridLayoutManager);
         mRecyclerView.setAdapter(mAdapter);
 
         
@@ -133,6 +133,7 @@ public class PhotoDisplayFragment extends Fragment implements PhotoClickListener
                 int index = mPhotos.indexOf(url);
                 if(index >= 0) {
                     mPhotos.remove(index);
+                    mAdapter.removeKey(index);
                     mAdapter.notifyItemRemoved(index);
                 }
             }

@@ -42,7 +42,7 @@ public class EventListRecyclerViewAdapter extends FirebaseRecyclerAdapter<CrowdE
             numPhotos = crowdEvent.getPhotos().size();
 
         eventViewHolder.numPhotosTextView.setText("Photo count: "+numPhotos);
-        eventViewHolder.locationTextView.setText("Location: "+crowdEvent.getLocation());
+        eventViewHolder.locationTextView.setText("Location: "+crowdEvent.getLocation() + " ("+crowdEvent.getCity()+")");
         eventViewHolder.endDateTextView.setText("End date: "+crowdEvent.getEndDate());
 
         eventViewHolder.view.setOnClickListener(new View.OnClickListener() {
