@@ -10,6 +10,7 @@ import com.bumptech.glide.Glide;
 import com.bumptech.glide.load.engine.DiskCacheStrategy;
 import com.firebase.ui.database.FirebaseRecyclerAdapter;
 import com.google.firebase.database.DatabaseReference;
+import com.squareup.picasso.Picasso;
 
 
 import net.dividedattention.crowdvision.R;
@@ -29,10 +30,9 @@ public class EventImagesRecyclerViewAdapterOld extends FirebaseRecyclerAdapter<S
 
 
     @Override
-    protected void populateViewHolder(final EventViewHolder eventViewHolder, String s, final int i) {
-        Glide.with(mContext)
+    protected void populateViewHolder(final EventViewHolder eventViewHolder, final String s, final int i) {
+        Picasso.with(mContext)
                 .load(s)
-                .diskCacheStrategy(DiskCacheStrategy.ALL)
                 .into(eventViewHolder.imageView);
 
         ViewCompat.setTransitionName(eventViewHolder.imageView,i+"_image");
@@ -40,7 +40,7 @@ public class EventImagesRecyclerViewAdapterOld extends FirebaseRecyclerAdapter<S
         eventViewHolder.imageView.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                mListener.onPhotoClicked(eventViewHolder,i);
+                mListener.onPhotoClicked(s,eventViewHolder.imageView,i,getRef(i).getKey());
             }
         });
     }
