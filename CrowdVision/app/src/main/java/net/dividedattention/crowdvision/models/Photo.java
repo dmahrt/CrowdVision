@@ -6,20 +6,42 @@ package net.dividedattention.crowdvision.models;
 public class Photo {
     String photoUrl;
     int likes;
+    float height;
+    float width;
 
     public Photo(String photoUrl, int likes) {
         this.photoUrl = photoUrl;
         this.likes = likes;
     }
 
-    public Photo(String photoUrl){
+    public Photo(String photoUrl, float height, float width){
         this.photoUrl = photoUrl;
         this.likes = 0;
+        this.height = height;
+        this.width = width;
     }
 
     public Photo(){
         this.photoUrl = null;
         this.likes = 0;
+        this.width = 0;
+        this.height = 0;
+    }
+
+    public float getHeight() {
+        return height;
+    }
+
+    public void setHeight(float height) {
+        this.height = height;
+    }
+
+    public float getWidth() {
+        return width;
+    }
+
+    public void setWidth(float width) {
+        this.width = width;
     }
 
     public String getPhotoUrl() {

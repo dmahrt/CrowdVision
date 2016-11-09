@@ -11,9 +11,13 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
+import android.widget.RelativeLayout;
 
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.load.engine.DiskCacheStrategy;
+import com.bumptech.glide.load.resource.drawable.GlideDrawable;
+import com.bumptech.glide.request.RequestListener;
+import com.squareup.picasso.Callback;
 import com.squareup.picasso.Picasso;
 import com.squareup.picasso.Target;
 
@@ -50,20 +54,46 @@ public class EventImagesRecyclerViewAdapter extends RecyclerView.Adapter<EventIm
     }
 
     @Override
-    public void onBindViewHolder(final ImageViewHolder eventViewHolder, final int position) {
+    public void onBindViewHolder(final ImageViewHolder imageViewHolder, final int position) {
+        Log.d(TAG, "onBindViewHolder: Entering "+mItems.get(position).getHeight());
 
-        Glide.with(eventViewHolder.imageView.getContext())
+//        if(mItems.get(position).getHeight() > 0){
+//            Log.d(TAG, "onBindViewHolder: retrieving bounds");
+//            RelativeLayout.LayoutParams rlp = (RelativeLayout.LayoutParams)imageViewHolder.imageView.getLayoutParams();
+//            float ratio = mItems.get(position).getHeight()/mItems.get(position).getWidth();
+//            rlp.height = (int)(rlp.width * ratio);
+//            imageViewHolder.imageView.setLayoutParams(rlp);
+//        }
+
+//        Picasso.with(imageViewHolder.imageView.getContext())
+//                .load(mItems.get(position).getPhotoUrl())
+//                .into(imageViewHolder.imageView, new Callback() {
+//                    @Override
+//                    public void onSuccess() {
+//                        float width = imageViewHolder.imageView.getWidth();
+//                        float height = imageViewHolder.imageView.getHeight();
+//                        Log.d(TAG, "onResourceReady: Setting image bounds "+position+" with height "+height);
+//                        mItems.get(position).setHeight(height);
+//                        mItems.get(position).setWidth(width);
+//                    }
+//
+//                    @Override
+//                    public void onError() {
+//
+//                    }
+//                });
+
+        Glide.with(imageViewHolder.imageView.getContext())
                 .load(mItems.get(position).getPhotoUrl())
                 .thumbnail(0.2f)
-                .into(eventViewHolder.imageView);
+                .into(imageViewHolder.imageView);
 
+        ViewCompat.setTransitionName(imageViewHolder.imageView,position+"_image");
 
-        ViewCompat.setTransitionName(eventViewHolder.imageView,position+"_image");
-
-        eventViewHolder.imageView.setOnClickListener(new View.OnClickListener() {
+        imageViewHolder.imageView.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                mListener.onPhotoClicked(mItems.get(position).getPhotoUrl(),eventViewHolder.imageView,position,mKeys.get(position));
+                mListener.onPhotoClicked(mItems.get(position).getPhotoUrl(),imageViewHolder.imageView,position,mKeys.get(position));
             }
         });
     }

@@ -160,7 +160,7 @@ public class PhotoDisplayFragment extends Fragment implements PhotoClickListener
         LinearLayoutManager linearLayoutManager = new LinearLayoutManager(getContext());
         GridLayoutManager gridLayoutManager = new GridLayoutManager(getContext(),2);
         mRecyclerView.setHasFixedSize(true);
-        mRecyclerView.setLayoutManager(staggeredGridLayoutManager);
+        mRecyclerView.setLayoutManager(gridLayoutManager);
         mRecyclerView.setAdapter(mAdapter);
 
         FloatingActionButton fab = (FloatingActionButton)view.findViewById(R.id.fab);
@@ -217,7 +217,7 @@ public class PhotoDisplayFragment extends Fragment implements PhotoClickListener
                             Uri downloadUrl = taskSnapshot.getDownloadUrl();
                             String imagePath = downloadUrl.toString();
                             Log.d(TAG, "onSuccess: "+imagePath);
-                            mFirebaseRef.push().setValue(new Photo(imagePath));
+                            mFirebaseRef.push().setValue(new Photo(imagePath,0));
                         }
                     });
 

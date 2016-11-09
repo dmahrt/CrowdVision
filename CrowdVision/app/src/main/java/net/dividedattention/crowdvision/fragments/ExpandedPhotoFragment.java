@@ -79,6 +79,7 @@ public class ExpandedPhotoFragment extends Fragment implements View.OnClickListe
         ImageView imageView = (ImageView) view.findViewById(R.id.image);
         Glide.with(getContext())
                 .load(photoUrl)
+                .thumbnail(0.2f)
                 .into(imageView);
 
         mFavImage = (ImageView)view.findViewById(R.id.fav_image);
