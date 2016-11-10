@@ -1,7 +1,9 @@
 package net.dividedattention.crowdvision.fragments;
 
 import android.app.Activity;
+import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.graphics.Bitmap;
 import android.net.Uri;
 import android.os.Build;
@@ -33,6 +35,7 @@ import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.database.ValueEventListener;
 import com.google.firebase.storage.FirebaseStorage;
 import com.google.firebase.storage.StorageReference;
 import com.google.firebase.storage.UploadTask;
@@ -41,13 +44,17 @@ import net.dividedattention.crowdvision.adapters.EventImagesRecyclerViewAdapter;
 import net.dividedattention.crowdvision.adapters.PhotoClickListener;
 import net.dividedattention.crowdvision.R;
 import net.dividedattention.crowdvision.adapters.EventImagesRecyclerViewAdapter;
+import net.dividedattention.crowdvision.models.CrowdEvent;
 import net.dividedattention.crowdvision.models.Photo;
 import net.dividedattention.crowdvision.transitions.ExpandedPhotoTransition;
 
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Date;
 
 /**
  * Created by drewmahrt on 7/29/16.
@@ -64,7 +71,7 @@ public class PhotoDisplayFragment extends Fragment implements PhotoClickListener
 
     private RecyclerView mRecyclerView;
     private EventImagesRecyclerViewAdapter mAdapter;
-    private DatabaseReference mFirebaseRootRef, mFirebaseRef;
+    private DatabaseReference mFirebaseRootRef, mFirebaseEventRef, mFirebasePhotosRef;
 
     public static PhotoDisplayFragment newInstance(String eventKey, String eventTitle) {
         Bundle args = new Bundle();
@@ -81,7 +88,8 @@ public class PhotoDisplayFragment extends Fragment implements PhotoClickListener
         setRetainInstance(true);
 
         mFirebaseRootRef = FirebaseDatabase.getInstance().getReference();
-        mFirebaseRef = mFirebaseRootRef.child("events/"+getArguments().getString(EVENT_KEY)+"/photos");
+        mFirebaseEventRef = mFirebaseRootRef.child("events/"+getArguments().getString(EVENT_KEY));
+        mFirebasePhotosRef = mFirebaseEventRef.child("photos");
 
 
         Log.d(TAG, "onCreate: Emptying photo list");
@@ -89,7 +97,7 @@ public class PhotoDisplayFragment extends Fragment implements PhotoClickListener
 
         mAdapter = new EventImagesRecyclerViewAdapter(mPhotos, this);
         mAdapter.setHasStableIds(true);
-        mFirebaseRef.addChildEventListener(new ChildEventListener() {
+        mFirebasePhotosRef.addChildEventListener(new ChildEventListener() {
             @Override
             public void onChildAdded(DataSnapshot dataSnapshot, String s) {
                 Photo photo = dataSnapshot.getValue(Photo.class);
@@ -163,7 +171,7 @@ public class PhotoDisplayFragment extends Fragment implements PhotoClickListener
         mRecyclerView.setLayoutManager(gridLayoutManager);
         mRecyclerView.setAdapter(mAdapter);
 
-        FloatingActionButton fab = (FloatingActionButton)view.findViewById(R.id.fab);
+        final FloatingActionButton fab = (FloatingActionButton)view.findViewById(R.id.fab);
         fab.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
@@ -173,6 +181,45 @@ public class PhotoDisplayFragment extends Fragment implements PhotoClickListener
                 startActivityForResult(Intent.createChooser(intent, "Select Picture"), PICK_IMAGE_REQUEST);
             }
         });
+
+        mFirebaseEventRef.addListenerForSingleValueEvent(new ValueEventListener() {
+            @Override
+            public void onDataChange(DataSnapshot dataSnapshot) {
+                CrowdEvent event = dataSnapshot.getValue(CrowdEvent.class);
+
+                SharedPreferences sharedPreferences = getContext().getSharedPreferences("net.dividedattention.crowdvision", Context.MODE_PRIVATE);
+                String city = sharedPreferences.getString("city",null);
+                String state = sharedPreferences.getString("state",null);
+
+                Log.d(TAG, "onDataChange: city: "+city+" "+event.getCity()+" || "+state+" "+event.getState());
+
+                if(city != null && state != null && state.equals(event.getState()) && city.equals(event.getCity()) && testCurrentEvent(event.getEndDate())){
+                    fab.setVisibility(View.VISIBLE);
+                }
+            }
+
+            @Override
+            public void onCancelled(DatabaseError databaseError) {
+
+            }
+        });
+
+
+    }
+
+    private boolean testCurrentEvent(String date){
+        SimpleDateFormat sdf = new SimpleDateFormat("MM/dd/yyyy");
+        Date currentDate, eventDate;
+
+        try {
+            currentDate = new Date();
+            eventDate = sdf.parse(date);
+            return !currentDate.after(eventDate);
+        } catch (ParseException e) {
+            e.printStackTrace();
+        }
+
+        return true;
     }
 
 
@@ -217,7 +264,7 @@ public class PhotoDisplayFragment extends Fragment implements PhotoClickListener
                             Uri downloadUrl = taskSnapshot.getDownloadUrl();
                             String imagePath = downloadUrl.toString();
                             Log.d(TAG, "onSuccess: "+imagePath);
-                            mFirebaseRef.push().setValue(new Photo(imagePath,0));
+                            mFirebasePhotosRef.push().setValue(new Photo(imagePath,0));
                         }
                     });
 

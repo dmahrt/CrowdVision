@@ -1,5 +1,8 @@
 package net.dividedattention.crowdvision.models;
 
+import android.os.Parcel;
+import android.os.Parcelable;
+
 import net.dividedattention.crowdvision.models.Photo;
 
 import java.util.Map;
@@ -7,7 +10,7 @@ import java.util.Map;
 /**
  * Created by drewmahrt on 5/11/16.
  */
-public class CrowdEvent {
+public class CrowdEvent implements Parcelable{
     private String title;
     private String location;
     private String city;
@@ -30,6 +33,44 @@ public class CrowdEvent {
     public CrowdEvent() {
 
     }
+
+    protected CrowdEvent(Parcel in) {
+        title = in.readString();
+        location = in.readString();
+        city = in.readString();
+        state = in.readString();
+        endDate = in.readString();
+        coverImageUrl = in.readString();
+        key = in.readString();
+    }
+
+    @Override
+    public void writeToParcel(Parcel dest, int flags) {
+        dest.writeString(title);
+        dest.writeString(location);
+        dest.writeString(city);
+        dest.writeString(state);
+        dest.writeString(endDate);
+        dest.writeString(coverImageUrl);
+        dest.writeString(key);
+    }
+
+    @Override
+    public int describeContents() {
+        return 0;
+    }
+
+    public static final Creator<CrowdEvent> CREATOR = new Creator<CrowdEvent>() {
+        @Override
+        public CrowdEvent createFromParcel(Parcel in) {
+            return new CrowdEvent(in);
+        }
+
+        @Override
+        public CrowdEvent[] newArray(int size) {
+            return new CrowdEvent[size];
+        }
+    };
 
     public String getCity() {
         return city;
@@ -73,5 +114,11 @@ public class CrowdEvent {
 
     public void setKey(String key){
         this.key = key;
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        CrowdEvent otherEvent = (CrowdEvent)obj;
+        return otherEvent.getKey().equals(getKey());
     }
 }

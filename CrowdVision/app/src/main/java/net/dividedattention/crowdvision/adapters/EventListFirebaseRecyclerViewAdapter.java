@@ -1,12 +1,10 @@
 package net.dividedattention.crowdvision.adapters;
 
+import android.content.Context;
 import android.content.Intent;
-import android.os.Parcelable;
 import android.support.v7.widget.RecyclerView;
 import android.util.Log;
-import android.view.LayoutInflater;
 import android.view.View;
-import android.view.ViewGroup;
 import android.widget.ImageView;
 import android.widget.TextView;
 
@@ -15,34 +13,29 @@ import com.bumptech.glide.load.engine.DiskCacheStrategy;
 import com.bumptech.glide.load.resource.drawable.GlideDrawable;
 import com.bumptech.glide.request.RequestListener;
 import com.bumptech.glide.request.target.Target;
+import com.firebase.ui.database.FirebaseRecyclerAdapter;
+import com.google.firebase.database.DatabaseReference;
 
-import net.dividedattention.crowdvision.R;
-import net.dividedattention.crowdvision.activities.EventPhotosActivity;
+
 import net.dividedattention.crowdvision.models.CrowdEvent;
-
-import java.util.List;
+import net.dividedattention.crowdvision.activities.EventPhotosActivity;
+import net.dividedattention.crowdvision.R;
 
 /**
- * Created by drewmahrt on 11/9/16.
+ * Created by drewmahrt on 5/11/16.
  */
+public class EventListFirebaseRecyclerViewAdapter extends FirebaseRecyclerAdapter<CrowdEvent,EventListFirebaseRecyclerViewAdapter.EventViewHolder> {
+    private Context context;
 
-public class EventListRecyclerViewAdapter extends RecyclerView.Adapter<EventListRecyclerViewAdapter.EventViewHolder> {
-    private List<CrowdEvent> mEvents;
-
-    public EventListRecyclerViewAdapter(List<CrowdEvent> events){
-        mEvents = events;
+    public EventListFirebaseRecyclerViewAdapter(Class<CrowdEvent> modelClass, int modelLayout, Class<EventViewHolder> viewHolderClass, DatabaseReference ref, Context context) {
+        super(modelClass, modelLayout, viewHolderClass, ref);
+        this.context = context;
     }
 
     @Override
-    public EventViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
-        LayoutInflater inflater = LayoutInflater.from(parent.getContext());
-        return new EventViewHolder(inflater.inflate(R.layout.event_card,parent,false));
-    }
-
-    @Override
-    public void onBindViewHolder(final EventViewHolder eventViewHolder, int position) {
-        CrowdEvent crowdEvent = mEvents.get(position);
+    protected void populateViewHolder(final EventViewHolder eventViewHolder, CrowdEvent crowdEvent, int i) {
         eventViewHolder.titleTextView.setText(crowdEvent.getTitle());
+        final int position = i;
 
         int numPhotos = 0;
         if(crowdEvent.getPhotos() != null)
@@ -55,15 +48,15 @@ public class EventListRecyclerViewAdapter extends RecyclerView.Adapter<EventList
         eventViewHolder.view.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                Intent intent = new Intent(eventViewHolder.view.getContext(), EventPhotosActivity.class);
-                intent.putExtra("eventKey",mEvents.get(eventViewHolder.getAdapterPosition()).getKey());
-                intent.putExtra("eventTitle",mEvents.get(eventViewHolder.getAdapterPosition()).getTitle());
-                eventViewHolder.view.getContext().startActivity(intent);
+                Intent intent = new Intent(context, EventPhotosActivity.class);
+                intent.putExtra("eventKey",getItem(position).getKey());
+                intent.putExtra("eventTitle",getItem(position).getTitle());
+                context.startActivity(intent);
             }
         });
 
         Log.d("EventListActivity","Loading cover: "+crowdEvent.getCoverImageUrl());
-        Glide.with(eventViewHolder.view.getContext())
+        Glide.with(context)
                 .load(crowdEvent.getCoverImageUrl())
                 .diskCacheStrategy(DiskCacheStrategy.RESULT)
                 .centerCrop()
@@ -82,16 +75,6 @@ public class EventListRecyclerViewAdapter extends RecyclerView.Adapter<EventList
                 })
                 .into(eventViewHolder.imageView);
 
-    }
-
-    @Override
-    public int getItemCount() {
-        return mEvents.size();
-    }
-
-    public void swapData(List<CrowdEvent> events) {
-        mEvents = events;
-        notifyDataSetChanged();
     }
 
     public static class EventViewHolder extends RecyclerView.ViewHolder{
