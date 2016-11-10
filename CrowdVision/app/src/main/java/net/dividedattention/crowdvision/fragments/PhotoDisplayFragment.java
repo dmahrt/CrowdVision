@@ -54,6 +54,7 @@ import java.io.IOException;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.Date;
 
 /**
@@ -153,6 +154,7 @@ public class PhotoDisplayFragment extends Fragment implements PhotoClickListener
         Toolbar toolbar = (Toolbar) view.findViewById(R.id.toolbar);
         toolbar.setTitle(getArguments().getString(EVENT_TITLE));
         ((AppCompatActivity)getActivity()).setSupportActionBar(toolbar);
+        ((AppCompatActivity) getActivity()).getSupportActionBar().setDisplayHomeAsUpEnabled(true);
 
 
 //        mAdapter = new EventImagesRecyclerViewAdapterOld(String.class,
@@ -182,14 +184,14 @@ public class PhotoDisplayFragment extends Fragment implements PhotoClickListener
             }
         });
 
+        SharedPreferences sharedPreferences = getContext().getSharedPreferences("net.dividedattention.crowdvision", Context.MODE_PRIVATE);
+        final String city = sharedPreferences.getString("city",null);
+        final String state = sharedPreferences.getString("state",null);
+
         mFirebaseEventRef.addListenerForSingleValueEvent(new ValueEventListener() {
             @Override
             public void onDataChange(DataSnapshot dataSnapshot) {
                 CrowdEvent event = dataSnapshot.getValue(CrowdEvent.class);
-
-                SharedPreferences sharedPreferences = getContext().getSharedPreferences("net.dividedattention.crowdvision", Context.MODE_PRIVATE);
-                String city = sharedPreferences.getString("city",null);
-                String state = sharedPreferences.getString("state",null);
 
                 Log.d(TAG, "onDataChange: city: "+city+" "+event.getCity()+" || "+state+" "+event.getState());
 
@@ -209,12 +211,21 @@ public class PhotoDisplayFragment extends Fragment implements PhotoClickListener
 
     private boolean testCurrentEvent(String date){
         SimpleDateFormat sdf = new SimpleDateFormat("MM/dd/yyyy");
-        Date currentDate, eventDate;
+        Date currentDateFormatted, eventDate;
+
+        Date currentDate = new Date();
+        Calendar cal = Calendar.getInstance();
+        cal.setTime(currentDate);
 
         try {
-            currentDate = new Date();
+            int month = cal.get(Calendar.MONTH) + 1;
+            int day = cal.get(Calendar.DAY_OF_MONTH);
+            int year = cal.get(Calendar.YEAR);
+
+            currentDateFormatted = sdf.parse(month+"/"+day+"/"+year);
             eventDate = sdf.parse(date);
-            return !currentDate.after(eventDate);
+            Log.d(TAG, "testCurrentEvent: Event: "+eventDate.toString()+" Current: "+currentDateFormatted.toString());
+            return !currentDateFormatted.after(eventDate);
         } catch (ParseException e) {
             e.printStackTrace();
         }

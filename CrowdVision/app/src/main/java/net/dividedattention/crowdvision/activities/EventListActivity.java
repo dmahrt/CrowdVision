@@ -61,6 +61,7 @@ public class EventListActivity extends AppCompatActivity implements GoogleApiCli
     private DatabaseReference mFirebaseRef;
     //private EventListFirebaseRecyclerViewAdapter mAdapter;
     private EventListPagerAdapter mPagerAdapter;
+    private ViewPager mEventsViewPager;
 
     private String mCity, mState;
     private AddressResultReceiver mResultReceiver;
@@ -109,10 +110,27 @@ public class EventListActivity extends AppCompatActivity implements GoogleApiCli
         }
 
         mPagerAdapter = new EventListPagerAdapter(getSupportFragmentManager(),mCurrentEvents,mRemoteEvents,mExpiredEvents);
-        ViewPager eventsViewPager = (ViewPager) findViewById(R.id.events_viewpager);
-        eventsViewPager.setAdapter(mPagerAdapter);
+        mEventsViewPager = (ViewPager) findViewById(R.id.events_viewpager);
+        mEventsViewPager.setAdapter(mPagerAdapter);
         TabLayout tabLayout = (TabLayout)findViewById(R.id.tablayout);
-        tabLayout.setupWithViewPager(eventsViewPager);
+        tabLayout.setupWithViewPager(mEventsViewPager);
+    }
+
+    @Override
+    protected void onSaveInstanceState(Bundle outState) {
+        super.onSaveInstanceState(outState);
+        outState.putParcelableArrayList("current",mCurrentEvents);
+        outState.putParcelableArrayList("remote",mRemoteEvents);
+        outState.putParcelableArrayList("expired",mExpiredEvents);
+        outState.putInt("position",mEventsViewPager.getCurrentItem());
+    }
+
+    @Override
+    protected void onRestoreInstanceState(Bundle savedInstanceState) {
+        mCurrentEvents = savedInstanceState.getParcelableArrayList("current");
+        mRemoteEvents = savedInstanceState.getParcelableArrayList("remote");
+        mExpiredEvents = savedInstanceState.getParcelableArrayList("expired");
+        mEventsViewPager.setCurrentItem(savedInstanceState.getInt("position"));
     }
 
     @Override

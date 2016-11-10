@@ -35,9 +35,11 @@ public class LoginActivity extends AppCompatActivity implements View.OnClickList
         FirebaseAuth auth = FirebaseAuth.getInstance();
         if (auth.getCurrentUser() != null) {
             // already signed in
-            Log.d(LoginActivity.class.getName(),"User already signed in");
+            Log.d(LoginActivity.class.getName(),"User already signed in "+auth.getCurrentUser().getEmail());
             checkLocationPermission();
         }
+
+
     }
 
 

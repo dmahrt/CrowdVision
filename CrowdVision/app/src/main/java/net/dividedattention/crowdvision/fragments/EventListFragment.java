@@ -28,6 +28,11 @@ public class EventListFragment extends Fragment {
     private EventListRecyclerViewAdapter mAdapter;
     private List<CrowdEvent> mEventList;
 
+    @Override
+    public void onCreate(@Nullable Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setRetainInstance(true);
+    }
 
     @Nullable
     @Override
@@ -42,7 +47,7 @@ public class EventListFragment extends Fragment {
         mRecyclerView.setLayoutManager(new LinearLayoutManager(getContext(),LinearLayoutManager.VERTICAL,false));
 
         mAdapter = new EventListRecyclerViewAdapter(mEventList);
-        Log.d(TAG, "onViewCreated: Adapter Created with num events "+mEventList.size());
+        //Log.d(TAG, "onViewCreated: Adapter Created with num events "+mEventList.size());
         mRecyclerView.setAdapter(mAdapter);
     }
 

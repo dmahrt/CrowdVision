@@ -30,8 +30,10 @@
         <activity
             android:name=".activities.EventPhotosActivity"
             android:label="@string/title_activity_event_photos"
-            android:theme="@style/AppTheme.NoActionBar" />
-        <activity android:name=".activities.LoginActivity">
+            android:theme="@style/AppTheme.NoActionBar"
+            android:parentActivityName=".activities.EventListActivity"/>
+        <activity android:name=".activities.LoginActivity"
+            android:theme="@style/AppTheme.NoActionBar">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 
