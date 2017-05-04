@@ -19,6 +19,8 @@ import com.google.firebase.auth.FirebaseAuth;
 
 import net.dividedattention.crowdvision.R;
 
+import java.util.Arrays;
+
 public class LoginActivity extends AppCompatActivity implements View.OnClickListener{
     private static final String TAG = "LoginActivity";
     private static final int RC_SIGN_IN = 20;
@@ -58,7 +60,8 @@ public class LoginActivity extends AppCompatActivity implements View.OnClickList
                     startActivityForResult(
                             AuthUI.getInstance(FirebaseApp.getInstance())
                                     .createSignInIntentBuilder()
-                                    .setProviders(AuthUI.FACEBOOK_PROVIDER)
+                                    .setProviders(Arrays.asList(new AuthUI.IdpConfig.Builder(AuthUI.GOOGLE_PROVIDER).build(),
+                                            new AuthUI.IdpConfig.Builder(AuthUI.FACEBOOK_PROVIDER).build()))
                                     .build(),
                             RC_SIGN_IN);
                 }
