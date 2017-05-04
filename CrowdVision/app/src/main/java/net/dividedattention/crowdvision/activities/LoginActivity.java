@@ -29,12 +29,29 @@ public class LoginActivity extends AppCompatActivity implements View.OnClickList
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_login);
+        setContentView(R.layout.auth_method_picker_layout);
 
         Button loginButton = (Button)findViewById(R.id.login_button);
-        loginButton.setOnClickListener(this);
+        //loginButton.setOnClickListener(this);
 
         FirebaseAuth auth = FirebaseAuth.getInstance();
+        if (auth.getCurrentUser() != null) {
+            // already signed in
+            Log.d(LoginActivity.class.getName(),"User already signed in");
+            checkLocationPermission();
+        }else {
+            startActivityForResult(
+                    AuthUI.getInstance(FirebaseApp.getInstance())
+                            .createSignInIntentBuilder()
+                            .setTheme(R.style.LoginThemeFirebase)
+                            .setLogo(R.drawable.ic_googleg_color_24dp)
+                            .setProviders(Arrays.asList(new AuthUI.IdpConfig.Builder(AuthUI.GOOGLE_PROVIDER).build(),
+                                    new AuthUI.IdpConfig.Builder(AuthUI.FACEBOOK_PROVIDER).build()))
+                            .build(),
+                    RC_SIGN_IN);
+        }
+
+        //FirebaseAuth auth = FirebaseAuth.getInstance();
         if (auth.getCurrentUser() != null) {
             // already signed in
             Log.d(LoginActivity.class.getName(),"User already signed in "+auth.getCurrentUser().getEmail());
@@ -60,6 +77,8 @@ public class LoginActivity extends AppCompatActivity implements View.OnClickList
                     startActivityForResult(
                             AuthUI.getInstance(FirebaseApp.getInstance())
                                     .createSignInIntentBuilder()
+                                    .setTheme(R.style.LoginThemeFirebase)
+                                    .setLogo(R.drawable.ic_googleg_color_24dp)
                                     .setProviders(Arrays.asList(new AuthUI.IdpConfig.Builder(AuthUI.GOOGLE_PROVIDER).build(),
                                             new AuthUI.IdpConfig.Builder(AuthUI.FACEBOOK_PROVIDER).build()))
                                     .build(),

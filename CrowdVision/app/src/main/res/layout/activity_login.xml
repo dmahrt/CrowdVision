@@ -17,7 +17,7 @@
             android:scaleType="centerCrop"/>
         <Button
             android:id="@+id/login_button"
-
+            android:visibility="gone"
             android:text="Login"
             android:textColor="#FFFFFF"
             android:textSize="30sp"

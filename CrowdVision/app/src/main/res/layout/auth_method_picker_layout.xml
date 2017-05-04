@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+              android:layout_width="match_parent"
+              android:layout_height="match_parent">
+
+    <ImageView
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:src="@drawable/cv_splash_scaled"
+        android:scaleType="centerCrop"/>
+
+    <FrameLayout
+        android:id="@+id/logo_layout"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center|top"
+        android:layout_marginTop="100dp">
+        <ImageView
+            android:id="@+id/logo"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:background="#fff"/>
+    </FrameLayout>
+
+    <!--<ImageView-->
+        <!--android:id="@+id/custom_logo"-->
+        <!--android:layout_width="100dp"-->
+        <!--android:layout_height="100dp"-->
+        <!--android:background="#fff"-->
+        <!--android:layout_gravity="top|center"/>-->
+
+
+
+    <LinearLayout
+        android:id="@+id/btn_holder"
+        style="@style/FirebaseUI.AuthMethodPicker.ButtonHolder"
+        android:layout_gravity="center|bottom"
+        android:layout_height="match_parent"
+        android:gravity="bottom"
+        android:layout_width="250dp">
+
+        <Button
+            android:id="@+id/email_provider"
+            android:layout_width="0dp"
+            android:layout_height="0dp"
+            style="@style/FirebaseUI.Button.AccountChooser.EmailButton"
+            android:text="Email"/>
+
+    </LinearLayout>
+
+</FrameLayout>
