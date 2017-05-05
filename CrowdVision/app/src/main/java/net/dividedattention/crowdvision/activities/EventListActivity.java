@@ -25,6 +25,9 @@ import android.util.Log;
 import android.view.View;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.widget.Button;
+import android.widget.ImageButton;
+import android.widget.RelativeLayout;
 import android.widget.Toast;
 
 import com.firebase.ui.auth.AuthUI;
@@ -34,11 +37,13 @@ import com.google.android.gms.location.LocationServices;
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
 import com.google.firebase.FirebaseApp;
+import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.database.ChildEventListener;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
+import com.tbruyelle.rxpermissions2.RxPermissions;
 
 import net.dividedattention.crowdvision.AddressServiceConstants;
 import net.dividedattention.crowdvision.adapters.EventListPagerAdapter;
@@ -59,7 +64,6 @@ public class EventListActivity extends AppCompatActivity implements GoogleApiCli
     private static final String TAG = "EventListActivity";
 
     private DatabaseReference mFirebaseRef;
-    //private EventListFirebaseRecyclerViewAdapter mAdapter;
     private EventListPagerAdapter mPagerAdapter;
     private ViewPager mEventsViewPager;
 
@@ -79,6 +83,15 @@ public class EventListActivity extends AppCompatActivity implements GoogleApiCli
         toolbar.setTitle(getString(R.string.event_list_activity_title));
         setSupportActionBar(toolbar);
 
+        //Check if user is logged in
+        FirebaseAuth auth = FirebaseAuth.getInstance();
+        if (auth.getCurrentUser() == null) {
+            //If user is not logged in, go to Login Activity
+            startActivity(new Intent(this,LoginActivity.class));
+            finish();
+            return;
+        }
+
         FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.fab);
         fab.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -88,17 +101,13 @@ public class EventListActivity extends AppCompatActivity implements GoogleApiCli
             }
         });
 
+        findViewById(R.id.enable_location_button).setOnClickListener(view -> {
+            checkLocationPermission();
+        });
 
         mCurrentEvents = new ArrayList<>();
         mRemoteEvents = new ArrayList<>();
         mExpiredEvents = new ArrayList<>();
-
-
-//        RecyclerView recyclerView = (RecyclerView) findViewById(R.id.events_list);
-//        recyclerView.setHasFixedSize(true);
-//        recyclerView.setLayoutManager(new LinearLayoutManager(this));
-//        mAdapter = new EventListFirebaseRecyclerViewAdapter(CrowdEvent.class, R.layout.event_card, EventListFirebaseRecyclerViewAdapter.EventViewHolder.class, mFirebaseRef, this);
-//        recyclerView.setAdapter(mAdapter);
 
         // Create an instance of GoogleAPIClient.
         if (mGoogleApiClient == null) {
@@ -109,11 +118,38 @@ public class EventListActivity extends AppCompatActivity implements GoogleApiCli
                     .build();
         }
 
+
+
         mPagerAdapter = new EventListPagerAdapter(getSupportFragmentManager(),mCurrentEvents,mRemoteEvents,mExpiredEvents);
         mEventsViewPager = (ViewPager) findViewById(R.id.events_viewpager);
         mEventsViewPager.setAdapter(mPagerAdapter);
         TabLayout tabLayout = (TabLayout)findViewById(R.id.tablayout);
         tabLayout.setupWithViewPager(mEventsViewPager);
+
+    }
+
+    private void checkLocationPermission(){
+        View locationLayout = findViewById(R.id.request_location_layout);
+        View fab = findViewById(R.id.fab);
+        View tabs = findViewById(R.id.tablayout);
+
+        RxPermissions rxPermissions = new RxPermissions(this);
+        rxPermissions
+                .request(Manifest.permission.ACCESS_FINE_LOCATION)
+                .subscribe(granted -> {
+                    if(granted){
+                        locationLayout.setVisibility(View.GONE);
+                        mEventsViewPager.setVisibility(View.VISIBLE);
+                        fab.setVisibility(View.VISIBLE);
+                        tabs.setVisibility(View.VISIBLE);
+                        mGoogleApiClient.connect();
+                    }else {
+                        locationLayout.setVisibility(View.VISIBLE);
+                        fab.setVisibility(View.GONE);
+                        tabs.setVisibility(View.GONE);
+                        mEventsViewPager.setVisibility(View.GONE);
+                    }
+                });
     }
 
     @Override
@@ -149,7 +185,7 @@ public class EventListActivity extends AppCompatActivity implements GoogleApiCli
 
         //noinspection SimplifiableIfStatement
         if (id == R.id.action_logout) {
-            AuthUI.getInstance(FirebaseApp.getInstance())
+            AuthUI.getInstance()
                     .signOut(this)
                     .addOnCompleteListener(new OnCompleteListener<Void>() {
                         public void onComplete(@NonNull Task<Void> task) {
@@ -335,6 +371,10 @@ public class EventListActivity extends AppCompatActivity implements GoogleApiCli
         });
     }
 
+    private void updateAfterLocationPermission(){
+        //TODO: Complete method
+    }
+
     private class AddressResultReceiver extends ResultReceiver {
         public AddressResultReceiver(Handler handler) {
             super(handler);
@@ -373,8 +413,8 @@ public class EventListActivity extends AppCompatActivity implements GoogleApiCli
     }
 
     protected void onStart() {
-        mGoogleApiClient.connect();
         super.onStart();
+        checkLocationPermission();
     }
 
     protected void onStop() {

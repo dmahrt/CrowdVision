@@ -20,8 +20,10 @@ import java.util.List;
 public class EventListPagerAdapter extends FragmentPagerAdapter {
     private ArrayList<CrowdEvent> mCurrentEvents, mRemoteEvents, mExpiredEvents;
 
-    public EventListPagerAdapter(FragmentManager fm, ArrayList<CrowdEvent> currentEvents,
-                                 ArrayList<CrowdEvent> remoteEvents, ArrayList<CrowdEvent> expiredEvents) {
+    public EventListPagerAdapter(FragmentManager fm,
+                                 ArrayList<CrowdEvent> currentEvents,
+                                 ArrayList<CrowdEvent> remoteEvents,
+                                 ArrayList<CrowdEvent> expiredEvents) {
         super(fm);
         mCurrentEvents = currentEvents;
         mRemoteEvents = remoteEvents;
