@@ -401,7 +401,7 @@ public class EventListActivity extends AppCompatActivity implements GoogleApiCli
                 editor.putString("state",mState);
                 editor.commit();
 
-                Toast.makeText(EventListActivity.this, "Current Location: "+mCity+", "+mState, Toast.LENGTH_SHORT).show();
+                //Toast.makeText(EventListActivity.this, "Current Location: "+mCity+", "+mState, Toast.LENGTH_SHORT).show();
                 createEventLists();
             }else{
                 Toast.makeText(EventListActivity.this,"Error finding address",Toast.LENGTH_LONG).show();
