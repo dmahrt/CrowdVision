@@ -15,23 +15,19 @@
             android:layout_height="match_parent"
             android:src="@drawable/cv_splash_scaled"
             android:scaleType="centerCrop"/>
-        <Button
-            android:id="@+id/login_button"
-            android:visibility="gone"
-            android:text="Login"
-            android:textColor="#FFFFFF"
-            android:textSize="30sp"
-            android:layout_gravity="center_horizontal|bottom"
-            android:layout_width="match_parent"
-            android:layout_height="60dp"
-            android:background="@drawable/login_buttonshape"
-            android:shadowColor="#A8A8A8"
-            android:shadowDx="0"
-            android:shadowDy="0"
-            android:layout_marginLeft="30dp"
-            android:layout_marginRight="30dp"
-            android:layout_marginBottom="50dp"
-            android:shadowRadius="5"
-            />
+        <FrameLayout
+            android:id="@+id/logo_layout"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center|top">
+            <ImageView
+                android:id="@+id/logo"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:adjustViewBounds="true"
+                android:src="@drawable/cv_logo"
+                />
+        </FrameLayout>
+
     </FrameLayout>
 </android.support.design.widget.CoordinatorLayout>

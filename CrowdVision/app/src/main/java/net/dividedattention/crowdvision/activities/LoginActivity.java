@@ -35,7 +35,7 @@ public class LoginActivity extends AppCompatActivity {
                 AuthUI.getInstance(FirebaseApp.getInstance())
                         .createSignInIntentBuilder()
                         .setTheme(R.style.LoginThemeFirebase)
-                        .setLogo(R.drawable.ic_googleg_color_24dp)
+                        .setLogo(R.drawable.cv_logo)
                         .setProviders(Arrays.asList(new AuthUI.IdpConfig.Builder(AuthUI.GOOGLE_PROVIDER).build(),
                                 new AuthUI.IdpConfig.Builder(AuthUI.FACEBOOK_PROVIDER).build()))
                         .build(),
