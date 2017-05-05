@@ -50,14 +50,15 @@ import java.util.Calendar;
 public class CreateEventActivity extends AppCompatActivity implements DatePickerDialog.OnDateSetListener{
     private static final String TAG = "CreateEventActivity";
     private static final int PLACE_PICKER_REQUEST = 0;
-    Button mEndDateButton, mSubmitButton, mChooseImageButton, mLocationButton;
-    EditText mTitleText;
-    TextView mLocationText;
-    ProgressBar mProgressBar;
-    ImageView mEventImageView;
-    String mEndDate;
-    Bitmap mSelectedImage;
-    DatabaseReference mFirebaseRef;
+    private Button mEndDateButton, mSubmitButton, mChooseImageButton, mLocationButton;
+    private EditText mTitleText;
+    private TextView mLocationText;
+    private ProgressBar mProgressBar;
+    private ImageView mEventImageView;
+    private Snackbar mPictureErrorSnackbar;
+    private String mEndDate;
+    private Bitmap mSelectedImage;
+    private DatabaseReference mFirebaseRef;
     private AddressResultReceiver mResultReceiver;
 
 
@@ -226,7 +227,17 @@ public class CreateEventActivity extends AppCompatActivity implements DatePicker
                     mEventImageView.setVisibility(View.VISIBLE);
 
                     if(mSelectedImage.getHeight() >= mSelectedImage.getWidth()) {
-                        Snackbar.make(findViewById(R.id.coord_layout), "We recommend using a landscape image", Snackbar.LENGTH_INDEFINITE).show();
+                        mPictureErrorSnackbar = Snackbar.make(findViewById(R.id.coord_layout),
+                                "We recommend using a landscape image",
+                                Snackbar.LENGTH_INDEFINITE);
+                        mPictureErrorSnackbar.getView().setBackgroundColor(Color.YELLOW);
+                        TextView textView = (TextView) mPictureErrorSnackbar.getView()
+                                .findViewById(android.support.design.R.id.snackbar_text);
+                        textView.setTextColor(Color.BLACK);
+                        mPictureErrorSnackbar.show();
+                    } else {
+                        if(mPictureErrorSnackbar != null)
+                            mPictureErrorSnackbar.dismiss();
                     }
                 } catch (IOException e) {
                     e.printStackTrace();
