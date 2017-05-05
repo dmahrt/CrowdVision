@@ -1,10 +1,14 @@
 package net.dividedattention.crowdvision.activities;
 
 import android.Manifest;
+import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.location.Location;
+import android.net.ConnectivityManager;
+import android.net.NetworkInfo;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Parcelable;
@@ -51,6 +55,7 @@ import net.dividedattention.crowdvision.fragments.EventListFragment;
 import net.dividedattention.crowdvision.models.CrowdEvent;
 import net.dividedattention.crowdvision.R;
 import net.dividedattention.crowdvision.adapters.EventListFirebaseRecyclerViewAdapter;
+import net.dividedattention.crowdvision.receivers.ConnectionBroadcastReceiver;
 import net.dividedattention.crowdvision.services.FetchAddressIntentService;
 
 import java.text.ParseException;
@@ -60,7 +65,7 @@ import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
 
-public class EventListActivity extends AppCompatActivity implements GoogleApiClient.ConnectionCallbacks, GoogleApiClient.OnConnectionFailedListener {
+public class EventListActivity extends AppCompatActivity implements GoogleApiClient.ConnectionCallbacks, GoogleApiClient.OnConnectionFailedListener, ConnectionBroadcastReceiver.ConnectionChangeListener {
     private static final String TAG = "EventListActivity";
 
     private DatabaseReference mFirebaseRef;
@@ -71,6 +76,8 @@ public class EventListActivity extends AppCompatActivity implements GoogleApiCli
     private AddressResultReceiver mResultReceiver;
     private GoogleApiClient mGoogleApiClient;
     private Location mLastLocation;
+
+    private ConnectionBroadcastReceiver mConnectionReceiver;
 
     private ArrayList<CrowdEvent> mCurrentEvents, mRemoteEvents, mExpiredEvents;
 
@@ -118,14 +125,11 @@ public class EventListActivity extends AppCompatActivity implements GoogleApiCli
                     .build();
         }
 
-
-
         mPagerAdapter = new EventListPagerAdapter(getSupportFragmentManager(),mCurrentEvents,mRemoteEvents,mExpiredEvents);
         mEventsViewPager = (ViewPager) findViewById(R.id.events_viewpager);
         mEventsViewPager.setAdapter(mPagerAdapter);
         TabLayout tabLayout = (TabLayout)findViewById(R.id.tablayout);
         tabLayout.setupWithViewPager(mEventsViewPager);
-
     }
 
     private void checkLocationPermission(){
@@ -371,8 +375,9 @@ public class EventListActivity extends AppCompatActivity implements GoogleApiCli
         });
     }
 
-    private void updateAfterLocationPermission(){
-        //TODO: Complete method
+    @Override
+    public void connectionResumed() {
+        checkLocationPermission();
     }
 
     private class AddressResultReceiver extends ResultReceiver {
@@ -414,10 +419,29 @@ public class EventListActivity extends AppCompatActivity implements GoogleApiCli
 
     protected void onStart() {
         super.onStart();
-        checkLocationPermission();
+
+        //Register connection broadcast receiver
+        mConnectionReceiver = new ConnectionBroadcastReceiver(this);
+        IntentFilter filter = new IntentFilter(ConnectivityManager.CONNECTIVITY_ACTION);
+        registerReceiver(mConnectionReceiver,filter);
+
+        //Check network connectivity
+        ConnectivityManager cm =
+                (ConnectivityManager)getSystemService(Context.CONNECTIVITY_SERVICE);
+        NetworkInfo activeNetwork = cm.getActiveNetworkInfo();
+        boolean isConnected = activeNetwork != null &&
+                activeNetwork.isConnectedOrConnecting();
+
+        if(isConnected) {
+            checkLocationPermission();
+        }else {
+            Log.d(TAG, "onStart: No network connection");
+            Toast.makeText(this, "No network connection", Toast.LENGTH_SHORT).show();
+        }
     }
 
     protected void onStop() {
+        unregisterReceiver(mConnectionReceiver);
         mGoogleApiClient.disconnect();
         super.onStop();
     }
