@@ -15,8 +15,25 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent"></android.support.v4.view.ViewPager>
 
-    <!--<android.support.v7.widget.RecyclerView-->
-        <!--android:id="@+id/events_list"-->
-        <!--android:layout_width="match_parent"-->
-        <!--android:layout_height="match_parent"></android.support.v7.widget.RecyclerView>-->
+    <RelativeLayout
+        android:id="@+id/request_location_layout"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:visibility="gone">
+        <TextView
+            android:id="@+id/location_message"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_centerInParent="true"
+            android:textSize="20sp"
+            android:text="Location is required to use Crowd Vision."/>
+        <ImageButton
+            android:id="@+id/enable_location_button"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_centerHorizontal="true"
+            android:backgroundTint="@color/colorPrimaryLight"
+            android:layout_below="@id/location_message"
+            android:src="@drawable/ic_location_on_black_24dp"/>
+    </RelativeLayout>
 </RelativeLayout>

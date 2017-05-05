@@ -12,18 +12,18 @@
         android:label="@string/app_name"
         android:supportsRtl="true"
         android:theme="@style/AppTheme">
+
+        <!-- Activities -->
         <activity
             android:name=".activities.EventListActivity"
             android:label="@string/app_name"
             android:theme="@style/AppTheme.NoActionBar">
-        </activity>
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
 
-        <meta-data
-            android:name="com.facebook.sdk.ApplicationId"
-            android:value="@string/facebook_application_id" />
-        <meta-data
-            android:name="net.dividedattention.crowdvision.GlideConfiguration"
-            android:value="GlideModule" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+            </activity>
 
         <activity android:name=".activities.CreateEventActivity" />
 
@@ -34,13 +34,9 @@
             android:parentActivityName=".activities.EventListActivity"/>
 
         <activity android:name=".activities.LoginActivity"
-            android:theme="@style/LoginTheme">
-            <intent-filter>
-                <action android:name="android.intent.action.MAIN" />
+            android:theme="@style/LoginTheme"/>
 
-                <category android:name="android.intent.category.LAUNCHER" />
-            </intent-filter>
-        </activity>
+        <!-- Services -->
 
         <service
             android:name=".services.MyFirebaseMessagingService">
@@ -49,6 +45,12 @@
             </intent-filter>
         </service>
 
+        <service
+            android:name=".services.FetchAddressIntentService"
+            android:exported="false"/>
+
+        <!-- Meta-Data -->
+
         <meta-data
             android:name="com.google.android.awareness.API_KEY"
             android:value="AIzaSyAUhfOj1jsV1PGvtM3uvW1aG7RSjZHfkmg"/>
@@ -56,9 +58,12 @@
             android:name="com.google.android.geo.API_KEY"
             android:value="AIzaSyAUhfOj1jsV1PGvtM3uvW1aG7RSjZHfkmg" />
 
-        <service
-            android:name=".services.FetchAddressIntentService"
-            android:exported="false"/>
+        <meta-data
+            android:name="com.facebook.sdk.ApplicationId"
+            android:value="@string/facebook_application_id" />
+        <meta-data
+            android:name="net.dividedattention.crowdvision.GlideConfiguration"
+            android:value="GlideModule" />
     </application>
 
 </manifest>

@@ -11,6 +11,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
+import android.widget.ProgressBar;
 import android.widget.RelativeLayout;
 
 import com.bumptech.glide.Glide;
@@ -43,9 +44,6 @@ public class EventImagesRecyclerViewAdapter extends RecyclerView.Adapter<EventIm
         mItems = items;
         mKeys = new ArrayList<>();
     }
-
-
-
 
     @Override
     public ImageViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
@@ -82,10 +80,23 @@ public class EventImagesRecyclerViewAdapter extends RecyclerView.Adapter<EventIm
 //
 //                    }
 //                });
-
+        imageViewHolder.progressBar.setVisibility(View.VISIBLE);
         Glide.with(imageViewHolder.imageView.getContext())
                 .load(mItems.get(position).getPhotoUrl())
                 .thumbnail(0.2f)
+                .listener(new RequestListener<String, GlideDrawable>() {
+                    @Override
+                    public boolean onException(Exception e, String model, com.bumptech.glide.request.target.Target<GlideDrawable> target, boolean isFirstResource) {
+                        imageViewHolder.progressBar.setVisibility(View.GONE);
+                        return false;
+                    }
+
+                    @Override
+                    public boolean onResourceReady(GlideDrawable resource, String model, com.bumptech.glide.request.target.Target<GlideDrawable> target, boolean isFromMemoryCache, boolean isFirstResource) {
+                        imageViewHolder.progressBar.setVisibility(View.GONE);
+                        return false;
+                    }
+                })
                 .into(imageViewHolder.imageView);
 
         ViewCompat.setTransitionName(imageViewHolder.imageView,position+"_image");
@@ -119,33 +130,14 @@ public class EventImagesRecyclerViewAdapter extends RecyclerView.Adapter<EventIm
     public void removeKey(int i){ mKeys.remove(i); }
 
     public static class ImageViewHolder extends RecyclerView.ViewHolder {
-        //public DynamicHeightImageView imageView;
         public ImageView imageView;
+        public ProgressBar progressBar;
 
         public ImageViewHolder(View itemView) {
             super(itemView);
             imageView = (ImageView)itemView.findViewById(R.id.image);
+            progressBar = (ProgressBar)itemView.findViewById(R.id.progress_bar);
         }
-
-//        @Override
-//        public void onBitmapLoaded(Bitmap bitmap, Picasso.LoadedFrom from) {
-//            // Calculate the image ratio of the loaded bitmap
-//            float ratio = (float) bitmap.getHeight() / (float) bitmap.getWidth();
-//            // Set the ratio for the image
-//            imageView.setHeightRatio(ratio);
-//            // Load the image into the view
-//            imageView.setImageBitmap(bitmap);
-//        }
-//
-//        @Override
-//        public void onBitmapFailed(Drawable errorDrawable) {
-//
-//        }
-//
-//        @Override
-//        public void onPrepareLoad(Drawable placeHolderDrawable) {
-//            imageView.setImageDrawable(placeHolderDrawable);
-//        }
     }
 
 }
