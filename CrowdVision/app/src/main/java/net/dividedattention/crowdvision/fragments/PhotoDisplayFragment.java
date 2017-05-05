@@ -115,9 +115,9 @@ public class PhotoDisplayFragment extends Fragment implements PhotoClickListener
 
             @Override
             public void onChildRemoved(DataSnapshot dataSnapshot) {
-                String url = dataSnapshot.getValue(String.class);
+                Photo photo = dataSnapshot.getValue(Photo.class);
                 Log.d(TAG, "onChildRemoved: list size "+mPhotos.size());
-                int index = mPhotos.indexOf(url);
+                int index = mPhotos.indexOf(photo.getPhotoUrl());
                 if(index >= 0) {
                     mPhotos.remove(index);
                     mAdapter.removeKey(index);
@@ -259,7 +259,7 @@ public class PhotoDisplayFragment extends Fragment implements PhotoClickListener
 
 
                     baos = new ByteArrayOutputStream();
-                    selectedImage.compress(Bitmap.CompressFormat.JPEG,10,baos);
+                    selectedImage.compress(Bitmap.CompressFormat.JPEG,50,baos);
                     final byte[] imageData = baos.toByteArray();
 
                     UploadTask uploadTask = spaceRef.putBytes(imageData);
@@ -305,7 +305,7 @@ public class PhotoDisplayFragment extends Fragment implements PhotoClickListener
         getActivity().getSupportFragmentManager()
                 .beginTransaction()
                 .addSharedElement(imageView, position+"_image")
-                .replace(R.id.container, fragment)
+                .replace(R.id.container, fragment,"expanded")
                 .addToBackStack(null)
                 .commit();
     }

@@ -2,6 +2,7 @@ package net.dividedattention.crowdvision.activities;
 
 import android.app.DatePickerDialog;
 import android.content.Intent;
+import android.content.res.Resources;
 import android.graphics.Bitmap;
 import android.graphics.Color;
 import android.location.Location;
@@ -10,17 +11,19 @@ import android.os.Handler;
 import android.provider.MediaStore;
 import android.support.annotation.NonNull;
 import android.support.design.widget.Snackbar;
+import android.support.design.widget.TextInputLayout;
+import android.support.v4.content.ContextCompat;
 import android.support.v4.os.ResultReceiver;
 import android.support.v7.app.ActionBar;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
-import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.DatePicker;
 import android.widget.EditText;
 import android.widget.ImageView;
+import android.widget.LinearLayout;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -43,18 +46,19 @@ import net.dividedattention.crowdvision.R;
 import net.dividedattention.crowdvision.services.FetchAddressIntentService;
 
 import java.io.ByteArrayOutputStream;
-import java.io.File;
 import java.io.IOException;
 import java.util.Calendar;
 
 public class CreateEventActivity extends AppCompatActivity implements DatePickerDialog.OnDateSetListener{
     private static final String TAG = "CreateEventActivity";
     private static final int PLACE_PICKER_REQUEST = 0;
-    private Button mEndDateButton, mSubmitButton, mChooseImageButton, mLocationButton;
+    private Button mSubmitButton, mChooseImageButton;
     private EditText mTitleText;
-    private TextView mLocationText;
+    private TextView mLocationText, mDateText;
     private ProgressBar mProgressBar;
-    private ImageView mEventImageView;
+    private ImageView mEventImageView, mEndDateImage, mLocationImage;
+    private LinearLayout mLocationLayout, mDateLayout;
+    private TextInputLayout mTitleTextLayout;
     private Snackbar mPictureErrorSnackbar;
     private String mEndDate;
     private Bitmap mSelectedImage;
@@ -74,15 +78,23 @@ public class CreateEventActivity extends AppCompatActivity implements DatePicker
         ActionBar actionBar = getSupportActionBar();
         actionBar.setTitle(getString(R.string.create_event_activity_title));
 
-        mEndDateButton = (Button)findViewById(R.id.end_date_button);
         mSubmitButton = (Button)findViewById(R.id.submit_button);
         mChooseImageButton = (Button)findViewById(R.id.choose_image_button);
-        mLocationButton = (Button)findViewById(R.id.location_button);
 
         mTitleText = (EditText)findViewById(R.id.input_title);
         mLocationText = (TextView) findViewById(R.id.location_text);
+        mDateText = (TextView) findViewById(R.id.date_text);
+
 
         mEventImageView = (ImageView)findViewById(R.id.event_image);
+        mLocationImage = (ImageView)findViewById(R.id.location_image);
+        mEndDateImage = (ImageView)findViewById(R.id.end_date_image);
+
+        mLocationLayout = (LinearLayout) findViewById(R.id.layout_location);
+        mDateLayout = (LinearLayout) findViewById(R.id.end_date_layout);
+
+        mTitleTextLayout = (TextInputLayout) findViewById(R.id.input_layout_title);
+
 
         mProgressBar = (ProgressBar)findViewById(R.id.progressBar);
 
@@ -92,12 +104,13 @@ public class CreateEventActivity extends AppCompatActivity implements DatePicker
             @Override
             public void onClick(View v) {
                 if(checkEventData()){
+                    mSubmitButton.setEnabled(false);
                     uploadToFirebase();
                 }
             }
         });
 
-        mEndDateButton.setOnClickListener(new View.OnClickListener() {
+        mDateLayout.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 Calendar now = Calendar.getInstance();
@@ -121,7 +134,7 @@ public class CreateEventActivity extends AppCompatActivity implements DatePicker
             }
         });
 
-        mLocationButton.setOnClickListener(new View.OnClickListener() {
+        mLocationLayout.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 try {
@@ -155,6 +168,7 @@ public class CreateEventActivity extends AppCompatActivity implements DatePicker
                 @Override
                 public void onFailure(@NonNull Exception exception) {
                     Toast.makeText(CreateEventActivity.this, "Image failed to upload", Toast.LENGTH_SHORT).show();
+                    mSubmitButton.setEnabled(true);
                 }
             }).addOnSuccessListener(new OnSuccessListener<UploadTask.TaskSnapshot>() {
                 @Override
@@ -185,18 +199,18 @@ public class CreateEventActivity extends AppCompatActivity implements DatePicker
     private boolean checkEventData(){
         boolean isValid = true;
         if(mTitleText.getText().toString().length() == 0){
-            mTitleText.setError("Title is required");
+            mTitleTextLayout.setError("Title is required");
             isValid = false;
         }
 
         if(mLocationName == null || mCity == null || mState == null){
             Log.e(TAG, "checkEventData: "+mLocationName+", "+mCity+", "+mState);
-            mLocationButton.setError("Location is required");
+            mLocationText.setTextColor(Color.RED);
             isValid = false;
         }
 
         if(mEndDate == null){
-            mEndDateButton.setBackgroundColor(Color.RED);
+            mDateText.setTextColor(Color.RED);
             isValid = false;
         }
 
@@ -210,9 +224,8 @@ public class CreateEventActivity extends AppCompatActivity implements DatePicker
     @Override
     public void onDateSet(DatePicker view, int year, int monthOfYear, int dayOfMonth) {
         mEndDate = (monthOfYear+1)+"/"+dayOfMonth+"/"+year;
-        mEndDateButton.setText("End Date: "+mEndDate);
-        Button defaultButton = new Button(this);
-        mEndDateButton.setBackground(defaultButton.getBackground());
+        mDateText.setText("End Date: "+mEndDate);
+        mDateText.setTextColor(ContextCompat.getColor(this,R.color.colorPrimaryDark));
     }
 
     @Override
@@ -225,6 +238,14 @@ public class CreateEventActivity extends AppCompatActivity implements DatePicker
                     mSelectedImage = MediaStore.Images.Media.getBitmap(getContentResolver(), uri);
                     mEventImageView.setImageBitmap(mSelectedImage);
                     mEventImageView.setVisibility(View.VISIBLE);
+                    mEventImageView.setOnClickListener(v -> {
+                        Intent intent = new Intent();
+                        intent.setType("image/*");
+                        intent.setAction(Intent.ACTION_GET_CONTENT);
+                        startActivityForResult(Intent.createChooser(intent, "Select Picture"), PICK_IMAGE_REQUEST);
+                    });
+
+                    mChooseImageButton.setVisibility(View.GONE);
 
                     if(mSelectedImage.getHeight() >= mSelectedImage.getWidth()) {
                         mPictureErrorSnackbar = Snackbar.make(findViewById(R.id.coord_layout),
@@ -251,6 +272,7 @@ public class CreateEventActivity extends AppCompatActivity implements DatePicker
                 Place place = PlacePicker.getPlace(this, data);
                 mLocationName = place.getName().toString();
                 textView.setText(mLocationName);
+                textView.setTextColor(ContextCompat.getColor(this,R.color.colorPrimaryDark));
 
 
                 Location location = new Location("");

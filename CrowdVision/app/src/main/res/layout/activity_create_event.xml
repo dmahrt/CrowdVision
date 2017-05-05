@@ -19,8 +19,6 @@
         android:descendantFocusability="beforeDescendants"
         android:focusableInTouchMode="true">
 
-
-
         <android.support.design.widget.TextInputLayout
             android:id="@+id/input_layout_title"
             android:layout_width="match_parent"
@@ -41,38 +39,63 @@
             android:layout_height="wrap_content"
             android:layout_below="@id/input_layout_title">
 
-            <Button
-                android:id="@+id/location_button"
+            <ImageView
+                android:id="@+id/location_image"
                 android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="@string/location_button" />
+                android:layout_height="match_parent"
+                android:adjustViewBounds="true"
+                android:src="@drawable/ic_edit_location_black_24dp"/>
+
+
             <TextView
                 android:id="@+id/location_text"
                 android:layout_width="wrap_content"
-                android:layout_height="wrap_content" />
+                android:layout_height="wrap_content"
+                android:paddingBottom="8dp"
+                android:paddingTop="8dp"
+                android:text="Select a location"
+                android:textSize="18sp"/>
 
         </LinearLayout>
 
-        <Button
-            android:id="@+id/end_date_button"
-            android:layout_width="wrap_content"
+        <LinearLayout
+            android:id="@+id/end_date_layout"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="Choose End Date"
-            android:layout_below="@id/layout_location"
-            android:layout_marginBottom="5dp"/>
+            android:layout_below="@id/layout_location">
+            <ImageView
+                android:id="@+id/end_date_image"
+                android:layout_width="wrap_content"
+                android:layout_height="match_parent"
+                android:adjustViewBounds="true"
+                android:src="@drawable/ic_date_range_black_24dp"/>
+
+            <TextView
+                android:id="@+id/date_text"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:hint="Event End Date"
+                android:inputType="none"
+                android:paddingBottom="8dp"
+                android:paddingTop="8dp"
+                android:text="Select an ending date"
+                android:textSize="18sp"/>
+
+        </LinearLayout>
 
         <Button
             android:id="@+id/choose_image_button"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_below="@id/end_date_button"
-            android:text="Choose Event Image"/>
+            android:layout_below="@id/end_date_layout"
+            android:text="Select Event Image"
+            />
 
         <ImageView
             android:id="@+id/event_image"
             android:layout_width="200dp"
             android:layout_height="200dp"
-            android:layout_below="@id/choose_image_button"
+            android:layout_below="@id/end_date_layout"
             android:visibility="gone"/>
 
         <Button
@@ -80,9 +103,8 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="Create Event"
-            android:layout_centerHorizontal="true"
-            android:layout_below="@id/event_image"/>
-
+            android:layout_alignParentBottom="true"
+            android:layout_centerHorizontal="true"/>
 
         <ProgressBar
             style="?android:attr/progressBarStyleLarge"

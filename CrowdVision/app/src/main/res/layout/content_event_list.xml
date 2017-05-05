@@ -34,6 +34,6 @@
             android:layout_centerHorizontal="true"
             android:backgroundTint="@color/colorPrimaryLight"
             android:layout_below="@id/location_message"
-            android:src="@drawable/ic_location_on_black_24dp"/>
+            android:src="@drawable/ic_location_permission"/>
     </RelativeLayout>
 </RelativeLayout>
