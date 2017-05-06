@@ -62,7 +62,7 @@ public class EventListRecyclerViewAdapter extends RecyclerView.Adapter<EventList
             }
         });
 
-        Log.d("EventListActivity","Loading cover: "+crowdEvent.getCoverImageUrl());
+        //Log.d("EventListActivity","Loading cover: "+crowdEvent.getCoverImageUrl());
         Glide.with(eventViewHolder.view.getContext())
                 .load(crowdEvent.getCoverImageUrl())
                 .diskCacheStrategy(DiskCacheStrategy.RESULT)
@@ -75,7 +75,7 @@ public class EventListRecyclerViewAdapter extends RecyclerView.Adapter<EventList
 
                     @Override
                     public boolean onResourceReady(GlideDrawable resource, String model, Target<GlideDrawable> target, boolean isFromMemoryCache, boolean isFirstResource) {
-                        Log.d("EventListActivity","Image is ready");
+                        //Log.d("EventListActivity","Image is ready");
                         eventViewHolder.imageView.setImageDrawable(resource);
                         return false;
                     }

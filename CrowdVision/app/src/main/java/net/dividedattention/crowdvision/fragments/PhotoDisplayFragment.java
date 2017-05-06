@@ -12,7 +12,9 @@ import android.provider.MediaStore;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.design.widget.FloatingActionButton;
+import android.support.v4.app.ActivityOptionsCompat;
 import android.support.v4.app.Fragment;
+import android.support.v4.view.ViewCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.GridLayoutManager;
 import android.support.v7.widget.LinearLayoutManager;
@@ -40,6 +42,8 @@ import com.google.firebase.storage.FirebaseStorage;
 import com.google.firebase.storage.StorageReference;
 import com.google.firebase.storage.UploadTask;
 
+import net.dividedattention.crowdvision.activities.EventPhotosActivity;
+import net.dividedattention.crowdvision.activities.ExpandedPhotoActivity;
 import net.dividedattention.crowdvision.adapters.EventImagesRecyclerViewAdapter;
 import net.dividedattention.crowdvision.adapters.PhotoClickListener;
 import net.dividedattention.crowdvision.R;
@@ -103,7 +107,7 @@ public class PhotoDisplayFragment extends Fragment implements PhotoClickListener
             public void onChildAdded(DataSnapshot dataSnapshot, String s) {
                 Photo photo = dataSnapshot.getValue(Photo.class);
                 mPhotos.add(0,photo);
-                Log.d(TAG, "onChildAdded: index: "+mPhotos.indexOf(photo)+" key: "+dataSnapshot.getKey());
+                //Log.d(TAG, "onChildAdded: index: "+mPhotos.indexOf(photo)+" key: "+dataSnapshot.getKey());
                 mAdapter.addKey(mPhotos.indexOf(photo),dataSnapshot.getKey());
                 mAdapter.notifyItemInserted(mPhotos.indexOf(photo));
             }
@@ -142,6 +146,11 @@ public class PhotoDisplayFragment extends Fragment implements PhotoClickListener
     public View onCreateView(LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
         View v = inflater.inflate(R.layout.fragment_all_photos,container,false);
         mRecyclerView = (RecyclerView) v.findViewById(R.id.photos_recycler);
+
+        Log.d(TAG, "onCreateView: backstack count: "+getActivity().getSupportFragmentManager().getBackStackEntryCount());
+        for(int entry = 0; entry < getActivity().getSupportFragmentManager().getBackStackEntryCount(); entry++){
+            Log.d(TAG, "onCreateView: Found fragment: " + getActivity().getSupportFragmentManager().getBackStackEntryAt(entry).getName());
+        }
 
         return v;
     }
@@ -302,11 +311,22 @@ public class PhotoDisplayFragment extends Fragment implements PhotoClickListener
 
         mLastPos = position;
 
-        getActivity().getSupportFragmentManager()
-                .beginTransaction()
-                .addSharedElement(imageView, position+"_image")
-                .replace(R.id.container, fragment,"expanded")
-                .addToBackStack(null)
-                .commit();
+//        getActivity().getSupportFragmentManager()
+//                .beginTransaction()
+//                .addSharedElement(imageView, position+"_image")
+//                .replace(R.id.container, fragment,"expanded")
+//                .addToBackStack("photos")
+//                .commit();
+        Intent expandedIntent = new Intent(getContext(), ExpandedPhotoActivity.class);
+        expandedIntent.putExtra(ExpandedPhotoActivity.PHOTO_URL_KEY,photoUrl);
+        expandedIntent.putExtra(ExpandedPhotoActivity.TRANSITION_KEY,position+"_image");
+        expandedIntent.putExtra(ExpandedPhotoActivity.PHOTO_PATH_KEY,"events/"+getArguments().getString(EVENT_KEY)+"/photos/"+key);
+
+        ActivityOptionsCompat options = ActivityOptionsCompat.
+                makeSceneTransitionAnimation(getActivity(),
+                        imageView,
+                        position+"_image");
+
+        startActivity(expandedIntent,options.toBundle());
     }
 }

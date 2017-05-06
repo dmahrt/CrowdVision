@@ -2,6 +2,7 @@ package net.dividedattention.crowdvision.activities;
 
 import android.support.v4.app.Fragment;
 import android.os.Bundle;
+import android.support.v4.app.FragmentManager;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 
@@ -23,31 +24,34 @@ public class EventPhotosActivity extends AppCompatActivity{
         ExpandedPhotoFragment expanded = (ExpandedPhotoFragment)getSupportFragmentManager().findFragmentByTag("expanded");
 
         Log.d(TAG, "onCreate: backstack count: "+getSupportFragmentManager().getBackStackEntryCount());
+        for(int entry = 0; entry < getSupportFragmentManager().getBackStackEntryCount(); entry++){
+            Log.d(TAG, "Found fragment: " + getSupportFragmentManager().getBackStackEntryAt(entry).getId());
+        }
 
         if(displayFragment == null){
             Log.d(TAG, "onCreate: First time launching");
-            PhotoDisplayFragment fragment = PhotoDisplayFragment.newInstance(eventKey,eventTitle);
-
+            Log.d(TAG, "onCreate: Adding photo fragment");
+            displayFragment = PhotoDisplayFragment.newInstance(eventKey,eventTitle);
             getSupportFragmentManager()
                     .beginTransaction()
-                    .add(R.id.container, fragment,"photos")
+                    .replace(R.id.container, displayFragment, "photos")
                     .commit();
-        }else{
-            //Fragment already exists
-            Log.d(TAG, "onCreate: Photo Display Fragment already exists");
+        }
+
+        if(expanded != null){
+            //getSupportFragmentManager().popBackStack(null, FragmentManager.POP_BACK_STACK_INCLUSIVE);
+            getSupportFragmentManager().popBackStack();
+            Log.d(TAG, "onCreate: backstack count before re-adding expanded: "+getSupportFragmentManager().getBackStackEntryCount());
+
+            Log.d(TAG, "onCreate: Expanded Fragment already exists");
             getSupportFragmentManager()
                     .beginTransaction()
-                    .replace(R.id.container, displayFragment,"photos")
+                    .replace(R.id.container, expanded,"expanded")
+                    .addToBackStack("photos")
                     .commit();
 
-            if(expanded != null) {
-                Log.d(TAG, "onCreate: Expanded Fragment already exists");
-                getSupportFragmentManager()
-                        .beginTransaction()
-                        .addToBackStack(null)
-                        .replace(R.id.container, expanded,"expanded")
-                        .commit();
-            }
+            Log.d(TAG, "onCreate: backstack count after re-adding expanded: "+getSupportFragmentManager().getBackStackEntryCount());
+
         }
     }
 }

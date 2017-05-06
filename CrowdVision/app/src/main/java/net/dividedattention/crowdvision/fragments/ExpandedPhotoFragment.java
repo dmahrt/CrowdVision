@@ -68,6 +68,12 @@ public class ExpandedPhotoFragment extends Fragment implements View.OnClickListe
         mPhotoKey = splitPath[splitPath.length-1];
         mPhotoLoaded = false;
         mUserLoaded = false;
+
+        Log.d(TAG, "onCreateView: backstack count: "+getActivity().getSupportFragmentManager().getBackStackEntryCount());
+        for(int entry = 0; entry < getActivity().getSupportFragmentManager().getBackStackEntryCount(); entry++){
+            Log.d(TAG, "onCreateView: Found fragment: " + getActivity().getSupportFragmentManager().getBackStackEntryAt(entry).getName());
+        }
+
         return v;
     }
 

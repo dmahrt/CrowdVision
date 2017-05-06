@@ -68,7 +68,7 @@ public class EventListFirebaseRecyclerViewAdapter extends FirebaseRecyclerAdapte
 
                     @Override
                     public boolean onResourceReady(GlideDrawable resource, String model, Target<GlideDrawable> target, boolean isFromMemoryCache, boolean isFirstResource) {
-                        Log.d("EventListActivity","Image is ready");
+                        //Log.d("EventListActivity","Image is ready");
                         eventViewHolder.imageView.setImageDrawable(resource);
                         return false;
                     }
