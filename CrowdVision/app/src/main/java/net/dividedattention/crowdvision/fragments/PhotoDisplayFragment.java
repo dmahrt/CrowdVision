@@ -248,75 +248,60 @@ public class PhotoDisplayFragment extends Fragment implements PhotoClickListener
         if(resultCode == Activity.RESULT_OK){
             if(requestCode == PICK_IMAGE_REQUEST){
                 Uri uri = data.getData();
-
-
-                ByteArrayOutputStream baos = null;
-
-                try {
-                    Log.d(TAG, "onActivityResult: Attempting to upload image");
-
-                    String fileName = "newImage.jpg";
-
-                    File imageFile = new File(getActivity().getFilesDir(),fileName);
-                    //Uri fileUri = Uri.fromFile(imageFile);
-                    Bitmap selectedImage = MediaStore.Images.Media.getBitmap(getActivity().getContentResolver(), uri);
-
-                    FirebaseStorage storage = FirebaseStorage.getInstance();
-                    StorageReference storageRef = storage.getReferenceFromUrl(getString(R.string.firebase_storage));
-                    StorageReference imagesRef = storageRef.child("images");
-                    StorageReference spaceRef = storageRef.child("images/"+System.currentTimeMillis() + "_" + selectedImage.getByteCount()+".jpg");
-
-
-                    baos = new ByteArrayOutputStream();
-                    selectedImage.compress(Bitmap.CompressFormat.JPEG,50,baos);
-                    final byte[] imageData = baos.toByteArray();
-
-                    UploadTask uploadTask = spaceRef.putBytes(imageData);
-                    uploadTask.addOnFailureListener(new OnFailureListener() {
-                        @Override
-                        public void onFailure(@NonNull Exception exception) {
-                            Toast.makeText(getContext(), "Image failed to upload", Toast.LENGTH_SHORT).show();
-                        }
-                    }).addOnSuccessListener(new OnSuccessListener<UploadTask.TaskSnapshot>() {
-                        @Override
-                        public void onSuccess(UploadTask.TaskSnapshot taskSnapshot) {
-                            // taskSnapshot.getMetadata() contains file metadata such as size, content-type, and download URL.
-                            Uri downloadUrl = taskSnapshot.getDownloadUrl();
-                            String imagePath = downloadUrl.toString();
-                            Log.d(TAG, "onSuccess: "+imagePath);
-                            mFirebasePhotosRef.push().setValue(new Photo(imagePath,0));
-                        }
-                    });
-
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
+                uploadPhotoToEvent(uri);
             }
+        }
+    }
+
+    public void uploadPhotoToEvent(Uri uri){
+        ByteArrayOutputStream baos = null;
+
+        try {
+            Log.d(TAG, "onActivityResult: Attempting to upload image");
+
+            String fileName = "newImage.jpg";
+
+            File imageFile = new File(getActivity().getFilesDir(),fileName);
+            //Uri fileUri = Uri.fromFile(imageFile);
+            Bitmap selectedImage = MediaStore.Images.Media.getBitmap(getActivity().getContentResolver(), uri);
+
+            FirebaseStorage storage = FirebaseStorage.getInstance();
+            StorageReference storageRef = storage.getReferenceFromUrl(getString(R.string.firebase_storage));
+            StorageReference imagesRef = storageRef.child("images");
+            StorageReference spaceRef = storageRef.child("images/"+System.currentTimeMillis() + "_" + selectedImage.getByteCount()+".jpg");
+
+
+            baos = new ByteArrayOutputStream();
+            selectedImage.compress(Bitmap.CompressFormat.JPEG,50,baos);
+            final byte[] imageData = baos.toByteArray();
+
+            UploadTask uploadTask = spaceRef.putBytes(imageData);
+            uploadTask.addOnFailureListener(new OnFailureListener() {
+                @Override
+                public void onFailure(@NonNull Exception exception) {
+                    Toast.makeText(getContext(), "Image failed to upload", Toast.LENGTH_SHORT).show();
+                }
+            }).addOnSuccessListener(new OnSuccessListener<UploadTask.TaskSnapshot>() {
+                @Override
+                public void onSuccess(UploadTask.TaskSnapshot taskSnapshot) {
+                    // taskSnapshot.getMetadata() contains file metadata such as size, content-type, and download URL.
+                    Uri downloadUrl = taskSnapshot.getDownloadUrl();
+                    String imagePath = downloadUrl.toString();
+                    Log.d(TAG, "onSuccess: "+imagePath);
+                    Toast.makeText(getContext(), "Image added to event", Toast.LENGTH_SHORT).show();
+                    mFirebasePhotosRef.push().setValue(new Photo(imagePath,0));
+                }
+            });
+
+        } catch (IOException e) {
+            e.printStackTrace();
         }
     }
 
     @Override
     public void onPhotoClicked(String photoUrl, ImageView imageView, int position,String key) {
-
-        Log.d(TAG, "onPhotoClicked: position "+position+" "+key);
-        ExpandedPhotoFragment fragment = ExpandedPhotoFragment.newInstance(photoUrl,
-                position+"_image",
-                "events/"+getArguments().getString(EVENT_KEY)+"/photos/"+key);
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-            fragment.setSharedElementEnterTransition(new ExpandedPhotoTransition());
-            fragment.setEnterTransition(new Fade());
-            fragment.setExitTransition(new Fade());
-            fragment.setSharedElementReturnTransition(new ExpandedPhotoTransition());
-        }
-
         mLastPos = position;
 
-//        getActivity().getSupportFragmentManager()
-//                .beginTransaction()
-//                .addSharedElement(imageView, position+"_image")
-//                .replace(R.id.container, fragment,"expanded")
-//                .addToBackStack("photos")
-//                .commit();
         Intent expandedIntent = new Intent(getContext(), ExpandedPhotoActivity.class);
         expandedIntent.putExtra(ExpandedPhotoActivity.PHOTO_URL_KEY,photoUrl);
         expandedIntent.putExtra(ExpandedPhotoActivity.TRANSITION_KEY,position+"_image");
