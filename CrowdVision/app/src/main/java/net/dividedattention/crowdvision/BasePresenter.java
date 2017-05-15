@@ -1,0 +1,9 @@
+package net.dividedattention.crowdvision;
+
+/**
+ * Created by drewmahrt on 5/15/17.
+ */
+
+public interface BasePresenter {
+    void start();
+}
