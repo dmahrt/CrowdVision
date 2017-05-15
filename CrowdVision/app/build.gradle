@@ -55,6 +55,8 @@ dependencies {
     compile 'io.reactivex.rxjava2:rxandroid:2.0.1'
     compile 'io.reactivex.rxjava2:rxjava:2.1.0'
     compile 'com.tbruyelle.rxpermissions2:rxpermissions:0.9.4@aar'
+    compile 'com.androidhuman.rxfirebase2:firebase-database:10.2.4.0'
+    compile 'com.androidhuman.rxfirebase2:firebase-auth:10.2.4.0'
     compile 'com.android.support.constraint:constraint-layout:1.0.2'
     testCompile 'junit:junit:4.12'
     compile 'com.android.support:multidex:1.0.1'
