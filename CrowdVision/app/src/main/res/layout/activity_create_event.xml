@@ -5,6 +5,7 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:fitsSystemWindows="true"
     android:id="@+id/coord_layout"
     tools:context=".eventcreate.CreateEventActivity">
     <RelativeLayout
@@ -95,13 +96,7 @@
             android:layout_below="@id/end_date_layout"
             android:visibility="gone"/>
 
-        <Button
-            android:id="@+id/submit_button"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Create Event"
-            android:layout_alignParentBottom="true"
-            android:layout_centerHorizontal="true"/>
+
 
         <ProgressBar
             style="?android:attr/progressBarStyleLarge"
@@ -111,5 +106,16 @@
             android:id="@+id/progressBar"
             android:layout_centerInParent="true"/>
 
+
+
     </RelativeLayout>
+
+    <Button
+        android:id="@+id/submit_button"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="bottom|center_horizontal"
+        android:text="Create Event"
+        app:layout_behavior="net.dividedattention.crowdvision.util.SlideUpBehavior"/>
+
 </android.support.design.widget.CoordinatorLayout>
