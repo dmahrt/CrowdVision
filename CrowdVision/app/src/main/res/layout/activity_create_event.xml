@@ -6,7 +6,6 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:id="@+id/coord_layout"
-    android:fitsSystemWindows="true"
     tools:context=".eventcreate.CreateEventActivity">
     <RelativeLayout
         android:layout_width="match_parent"
@@ -15,9 +14,7 @@
         android:paddingLeft="@dimen/activity_horizontal_margin"
         android:paddingRight="@dimen/activity_horizontal_margin"
         android:paddingTop="@dimen/activity_vertical_margin"
-        tools:context=".eventcreate.CreateEventActivity"
-        android:descendantFocusability="beforeDescendants"
-        android:focusableInTouchMode="true">
+        tools:context=".eventcreate.CreateEventActivity">
 
         <android.support.design.widget.TextInputLayout
             android:id="@+id/input_layout_title"

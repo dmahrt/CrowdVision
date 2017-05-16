@@ -39,6 +39,7 @@ import com.google.firebase.storage.FirebaseStorage;
 import com.google.firebase.storage.StorageReference;
 import com.google.firebase.storage.UploadTask;
 
+import net.dividedattention.crowdvision.data.events.EventsRepository;
 import net.dividedattention.crowdvision.util.AddressServiceConstants;
 import net.dividedattention.crowdvision.data.CrowdEvent;
 import net.dividedattention.crowdvision.R;
@@ -48,7 +49,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.util.Calendar;
 
-public class CreateEventActivity extends AppCompatActivity implements DatePickerDialog.OnDateSetListener{
+public class CreateEventActivity extends AppCompatActivity implements DatePickerDialog.OnDateSetListener, CreateEventContract.View{
     private static final String TAG = "CreateEventActivity";
     private static final int PLACE_PICKER_REQUEST = 0;
     private Button mSubmitButton, mChooseImageButton;
@@ -61,8 +62,8 @@ public class CreateEventActivity extends AppCompatActivity implements DatePicker
     private Snackbar mPictureErrorSnackbar;
     private String mEndDate;
     private Bitmap mSelectedImage;
-    private DatabaseReference mFirebaseRef;
-    private AddressResultReceiver mResultReceiver;
+
+    private CreateEventPresenter mPresenter;
 
 
     private int PICK_IMAGE_REQUEST = 1;
@@ -84,6 +85,7 @@ public class CreateEventActivity extends AppCompatActivity implements DatePicker
         mLocationText = (TextView) findViewById(R.id.location_text);
         mDateText = (TextView) findViewById(R.id.date_text);
 
+        mPresenter = new CreateEventPresenter(this,EventsRepository.getInstance(this));
 
         mEventImageView = (ImageView)findViewById(R.id.event_image);
         mLocationImage = (ImageView)findViewById(R.id.location_image);
@@ -97,15 +99,12 @@ public class CreateEventActivity extends AppCompatActivity implements DatePicker
 
         mProgressBar = (ProgressBar)findViewById(R.id.progressBar);
 
-        mFirebaseRef = FirebaseDatabase.getInstance().getReference().child("events");
 
         mSubmitButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                if(checkEventData()){
-                    mSubmitButton.setEnabled(false);
-                    uploadToFirebase();
-                }
+                mProgressBar.setVisibility(View.VISIBLE);
+                mPresenter.saveEvent(mTitleText.getText().toString().trim(),mLocationName,mCity,mState,mEndDate,mSelectedImage);
             }
         });
 
@@ -148,78 +147,6 @@ public class CreateEventActivity extends AppCompatActivity implements DatePicker
         });
     }
 
-    private void uploadToFirebase() {
-        ByteArrayOutputStream baos = null;
-
-        try {
-            FirebaseStorage storage = FirebaseStorage.getInstance();
-            StorageReference storageRef = storage.getReferenceFromUrl(getString(R.string.firebase_storage));
-            StorageReference spaceRef = storageRef.child("images/" + System.currentTimeMillis() + "_" + mSelectedImage.getByteCount() + ".jpg");
-
-            baos = new ByteArrayOutputStream();
-            mSelectedImage.compress(Bitmap.CompressFormat.JPEG, 30, baos);
-            final byte[] imageData = baos.toByteArray();
-
-            ProgressBar progressBar = (ProgressBar) findViewById(R.id.progressBar);
-            progressBar.setVisibility(View.VISIBLE);
-            UploadTask uploadTask = spaceRef.putBytes(imageData);
-            uploadTask.addOnFailureListener(new OnFailureListener() {
-                @Override
-                public void onFailure(@NonNull Exception exception) {
-                    Toast.makeText(CreateEventActivity.this, "Image failed to upload", Toast.LENGTH_SHORT).show();
-                    mSubmitButton.setEnabled(true);
-                }
-            }).addOnSuccessListener(new OnSuccessListener<UploadTask.TaskSnapshot>() {
-                @Override
-                public void onSuccess(UploadTask.TaskSnapshot taskSnapshot) {
-                    // taskSnapshot.getMetadata() contains file metadata such as size, content-type, and download URL.
-                    Uri downloadUrl = taskSnapshot.getDownloadUrl();
-                    String imagePath = downloadUrl.toString();
-                    Log.d(TAG, "onSuccess: " + imagePath);
-
-                    CrowdEvent event = new CrowdEvent(mTitleText.getText().toString(),
-                            mLocationName,
-                            mCity,
-                            mState,
-                            mEndDate,
-                            null,
-                            imagePath);
-                    DatabaseReference subRef = mFirebaseRef.push();
-                    event.setKey(subRef.getKey());
-                    subRef.setValue(event);
-                    finish();
-                }
-            });
-        }catch (Exception e){
-            e.printStackTrace();
-        }
-    }
-
-    private boolean checkEventData(){
-        boolean isValid = true;
-        if(mTitleText.getText().toString().length() == 0){
-            mTitleTextLayout.setError("Title is required");
-            isValid = false;
-        }
-
-        if(mLocationName == null || mCity == null || mState == null){
-            Log.e(TAG, "checkEventData: "+mLocationName+", "+mCity+", "+mState);
-            mLocationText.setTextColor(Color.RED);
-            isValid = false;
-        }
-
-        if(mEndDate == null){
-            mDateText.setTextColor(Color.RED);
-            isValid = false;
-        }
-
-        if(mSelectedImage == null){
-            mChooseImageButton.setBackgroundColor(Color.RED);
-            isValid = false;
-        }
-        return isValid;
-    }
-
     @Override
     public void onDateSet(DatePicker view, int year, int monthOfYear, int dayOfMonth) {
         mEndDate = (monthOfYear+1)+"/"+dayOfMonth+"/"+year;
@@ -232,40 +159,9 @@ public class CreateEventActivity extends AppCompatActivity implements DatePicker
         if(requestCode == PICK_IMAGE_REQUEST){
             if(resultCode == RESULT_OK){
                 Uri uri = data.getData();
-
-                try {
-                    mSelectedImage = MediaStore.Images.Media.getBitmap(getContentResolver(), uri);
-                    mEventImageView.setImageBitmap(mSelectedImage);
-                    mEventImageView.setVisibility(View.VISIBLE);
-                    mEventImageView.setOnClickListener(v -> {
-                        Intent intent = new Intent();
-                        intent.setType("image/*");
-                        intent.setAction(Intent.ACTION_GET_CONTENT);
-                        startActivityForResult(Intent.createChooser(intent, "Select Picture"), PICK_IMAGE_REQUEST);
-                    });
-
-                    mChooseImageButton.setVisibility(View.GONE);
-
-                    if(mSelectedImage.getHeight() >= mSelectedImage.getWidth()) {
-                        mPictureErrorSnackbar = Snackbar.make(findViewById(R.id.coord_layout),
-                                "We recommend using a landscape image",
-                                Snackbar.LENGTH_INDEFINITE);
-                        mPictureErrorSnackbar.getView().setBackgroundColor(Color.YELLOW);
-                        TextView textView = (TextView) mPictureErrorSnackbar.getView()
-                                .findViewById(android.support.design.R.id.snackbar_text);
-                        textView.setTextColor(Color.BLACK);
-                        mPictureErrorSnackbar.show();
-                    } else {
-                        if(mPictureErrorSnackbar != null)
-                            mPictureErrorSnackbar.dismiss();
-                    }
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
+                mPresenter.retrieveGalleryImage(uri);
             }
-        }
-
-        if (requestCode == PLACE_PICKER_REQUEST) {
+        } else if (requestCode == PLACE_PICKER_REQUEST) {
             if (resultCode == RESULT_OK) {
                 TextView textView = (TextView) findViewById(R.id.location_text);
                 Place place = PlacePicker.getPlace(this, data);
@@ -273,39 +169,102 @@ public class CreateEventActivity extends AppCompatActivity implements DatePicker
                 textView.setText(mLocationName);
                 textView.setTextColor(ContextCompat.getColor(this,R.color.colorPrimaryDark));
 
-
                 Location location = new Location("");
                 location.setLatitude(place.getLatLng().latitude);
                 location.setLongitude(place.getLatLng().longitude);
                 startIntentService(location);
-
             }
         }
     }
 
-    class AddressResultReceiver extends ResultReceiver {
-        public AddressResultReceiver(Handler handler) {
-            super(handler);
+    @Override
+    public void setPresenter(CreateEventContract.Presenter presenter) {
+        //not using a fragment
+    }
+
+    @Override
+    public void showPhotoRatioWarning() {
+        mPictureErrorSnackbar = Snackbar.make(findViewById(R.id.coord_layout),
+                "We recommend using a landscape image",
+                Snackbar.LENGTH_INDEFINITE);
+        mPictureErrorSnackbar.getView().setBackgroundColor(Color.YELLOW);
+        TextView textView = (TextView) mPictureErrorSnackbar.getView()
+                .findViewById(android.support.design.R.id.snackbar_text);
+        textView.setTextColor(Color.BLACK);
+        mPictureErrorSnackbar.show();
+    }
+
+    @Override
+    public void dismissRationWarning() {
+        if(mPictureErrorSnackbar != null)
+            mPictureErrorSnackbar.dismiss();
+    }
+
+    @Override
+    public void showIncompleteErrors(boolean titleValid, boolean dateValid, boolean locationValid, boolean photoValid) {
+        mProgressBar.setVisibility(View.GONE);
+        if(!titleValid){
+            Log.d(TAG, "showIncompleteErrors: Invalid title");
+            mTitleTextLayout.setError("Title is required");
         }
 
-        @Override
-        protected void onReceiveResult(int resultCode, Bundle resultData) {
-
-            // Display the address string
-            // or an error message sent from the intent service.
-            if(resultCode == AddressServiceConstants.SUCCESS_RESULT) {
-                mCity = resultData.getString(AddressServiceConstants.RESULT_DATA_CITY);
-                mState = resultData.getString(AddressServiceConstants.RESULT_DATA_STATE);
-            }else{
-                Toast.makeText(CreateEventActivity.this,"Error finding address",Toast.LENGTH_LONG).show();
-            }
+        if(!locationValid){
+            Log.e(TAG, "checkEventData: "+mLocationName+", "+mCity+", "+mState);
+            mLocationText.setTextColor(Color.RED);
         }
+
+        if(!dateValid){
+            mDateText.setTextColor(Color.RED);
+        }
+
+        if(!photoValid){
+            mChooseImageButton.setBackgroundColor(Color.RED);
+        }
+    }
+
+    @Override
+    public void completePhotoUpload() {
+        mProgressBar.setVisibility(View.GONE);
+        finish();
+    }
+
+    @Override
+    public void showGalleryImage(Bitmap bitmap) {
+        mSelectedImage = bitmap;
+        mEventImageView.setImageBitmap(mSelectedImage);
+        mEventImageView.setVisibility(View.VISIBLE);
+        mEventImageView.setOnClickListener(v -> {
+            Intent intent = new Intent();
+            intent.setType("image/*");
+            intent.setAction(Intent.ACTION_GET_CONTENT);
+            startActivityForResult(Intent.createChooser(intent, "Select Picture"), PICK_IMAGE_REQUEST);
+        });
+
+        mChooseImageButton.setVisibility(View.GONE);
+
+        mPresenter.checkImageRatio(mSelectedImage);
+    }
+
+    @Override
+    public void showUploadError() {
+        Toast.makeText(this, "Sorry, an error occurred while creating your event.", Toast.LENGTH_SHORT).show();
     }
 
     protected void startIntentService(Location location) {
-        mResultReceiver = new AddressResultReceiver(new Handler());
         Intent intent = new Intent(this, FetchAddressIntentService.class);
-        intent.putExtra(AddressServiceConstants.RECEIVER, mResultReceiver);
+        intent.putExtra(AddressServiceConstants.RECEIVER, new ResultReceiver(new Handler()){
+            @Override
+            protected void onReceiveResult(int resultCode, Bundle resultData) {
+                // Display the address string
+                // or an error message sent from the intent service.
+                if(resultCode == AddressServiceConstants.SUCCESS_RESULT) {
+                    mCity = resultData.getString(AddressServiceConstants.RESULT_DATA_CITY);
+                    mState = resultData.getString(AddressServiceConstants.RESULT_DATA_STATE);
+                }else{
+                    Toast.makeText(CreateEventActivity.this,"Error finding address",Toast.LENGTH_LONG).show();
+                }
+            }
+        });
         intent.putExtra(AddressServiceConstants.LOCATION_DATA_EXTRA, location);
         startService(intent);
     }
