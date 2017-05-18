@@ -1,6 +1,5 @@
 # CrowdVision
 
----
 
 Have you ever been to a concert or party, and wished you could keep the photos everyone else was taking? Wouldn't it be nice if there was an album that everyone was able to share? Crowd Vision is a platform for creating crowdsourced photo albums centered around social events. 
 
