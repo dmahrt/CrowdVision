@@ -88,7 +88,7 @@ public class EventListActivity extends AppCompatActivity implements GoogleApiCli
             finish();
             return;
         }
-
+        
         FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.fab);
         fab.setOnClickListener(new View.OnClickListener() {
             @Override

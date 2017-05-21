@@ -19,6 +19,8 @@ import io.reactivex.Observable;
 public interface EventsDataSource {
     rx.Observable addEvent(String title, String location, String city, String state, String endDate, Bitmap image);
 
+    Completable changeLikeStatus(String photoPath, Photo photo, User user);
+
     void addPhoto();
 
     Bitmap getImageFromGallery(Uri uri);
@@ -27,9 +29,7 @@ public interface EventsDataSource {
 
     Observable<Photo> getPhotos();
 
-    Observable<Photo> getIndividualPhotos();
+    Observable<Photo> getIndividualPhoto(String photoPath);
 
     Observable<User> getUser();
-
-
 }

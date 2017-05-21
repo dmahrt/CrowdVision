@@ -17,36 +17,31 @@ import com.google.firebase.database.FirebaseDatabase;
 import net.dividedattention.crowdvision.R;
 import net.dividedattention.crowdvision.data.Photo;
 import net.dividedattention.crowdvision.data.User;
+import net.dividedattention.crowdvision.data.events.EventsRepository;
+import net.dividedattention.crowdvision.eventcreate.CreateEventContract;
 
 import io.reactivex.disposables.CompositeDisposable;
 
-public class ExpandedPhotoActivity extends AppCompatActivity{
+public class ExpandedPhotoActivity extends AppCompatActivity implements ExpandedPhotoContract.View{
     private static final String TAG = "ExpandedPhotoActivity";
     public static final String PHOTO_URL_KEY = "photo_url";
     public static final String TRANSITION_KEY = "transition_key";
     public static final String PHOTO_PATH_KEY = "photo_path";
 
-    private int transitionName;
     private ImageView mFavImage;
     private TextView mLikesText;
-    private String mPhotoPath;
-    private User mCurrentUser;
-    private Photo mCurrentPhoto;
-    private DatabaseReference mPhotoReference;
-    private DatabaseReference mUserReference;
-    private String mPhotoKey;
-    private CompositeDisposable mCompositeDisposable;
+
+    private ExpandedPhotoContract.Presenter mPresenter;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_expanded_photo);
 
-        mCompositeDisposable = new CompositeDisposable();
+        mFavImage = (ImageView) findViewById(R.id.fav_image);
+        mLikesText = (TextView) findViewById(R.id.likes_text);
 
-        mPhotoPath = getIntent().getStringExtra(PHOTO_PATH_KEY);
-        String[] splitPath = mPhotoPath.split("/");
-        mPhotoKey = splitPath[splitPath.length - 1];
+        mPresenter = new ExpandedPhotoPresenter(this, EventsRepository.getInstance(this));
 
         String photoUrl = getIntent().getStringExtra(PHOTO_URL_KEY);
         ImageView imageView = (ImageView) findViewById(R.id.image);
@@ -54,92 +49,51 @@ public class ExpandedPhotoActivity extends AppCompatActivity{
             imageView.setTransitionName(getIntent().getStringExtra(TRANSITION_KEY));
         }
 
+        mFavImage.setOnClickListener(v -> mPresenter.toggleLikeStatus());
+
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        mPresenter.loadImageData(getIntent().getStringExtra(PHOTO_PATH_KEY));
+    }
+
+
+    //View contract methods
+
+    @Override
+    public void setPresenter(ExpandedPhotoContract.Presenter presenter) {
+
+    }
+
+    @Override
+    public void showUpdatedLikeButton(boolean isLiked) {
+        if (isLiked) {
+            mFavImage.setColorFilter(Color.argb(255, 255, 51, 51));
+        } else {
+            mFavImage.setColorFilter(Color.argb(255, 0, 0, 0));
+        }
+    }
+
+    @Override
+    public void showUpdatedLikeCount(int count) {
+        mLikesText.setText("Likes: " + count);
+    }
+
+    @Override
+    public void showImage(String photoUrl) {
+        ImageView imageView = (ImageView) findViewById(R.id.image);
         Glide.with(this)
                 .load(photoUrl)
                 .thumbnail(0.2f)
                 .into(imageView);
-
-
-        mFavImage = (ImageView) findViewById(R.id.fav_image);
-        mLikesText = (TextView) findViewById(R.id.likes_text);
-
-
-        mPhotoReference = FirebaseDatabase.getInstance().getReference().child(mPhotoPath);
-        mUserReference = FirebaseDatabase.getInstance().getReference().child("users/" + FirebaseAuth.getInstance().getCurrentUser().getUid());
-
-                mCompositeDisposable.add(RxFirebaseDatabase
-                        .dataChanges(mPhotoReference)
-                        .map(dataSnapshot -> {
-                            Log.d(TAG, "flatmap user: retrieved photo");
-
-                            return dataSnapshot.getValue(Photo.class);
-                        })
-                        .subscribe(photo -> {
-                            mCurrentPhoto = photo;
-                            Log.d(TAG, "subscribed: Data changing");
-                            Log.d(TAG, "subscribed: Likes: "+mCurrentPhoto.getLikes());
-                            mLikesText.setText("Likes: " + mCurrentPhoto.getLikes());
-
-                        }));
-
-                mCompositeDisposable.add(RxFirebaseDatabase
-                        .dataChanges(mUserReference)
-                        .map(dataSnapshot -> {
-                            User user = dataSnapshot.getValue(User.class);
-
-                            //Create user object if it doesn't exist in Firebase
-                            if (user == null)
-                                user = new User();
-
-                            Log.d(TAG, "flatmap user: retrieved user");
-                            return user;
-                        })
-                        .subscribe(user -> {
-                            mCurrentUser = user;
-                            //Check if current user has liked this photo, and update view
-                            if (mCurrentUser.getLikesList().contains(mPhotoKey)) {
-                                mFavImage.setColorFilter(Color.argb(255, 255, 51, 51));
-                            } else {
-                                mFavImage.setColorFilter(Color.argb(255, 0, 0, 0));
-                            }
-
-                        }
-                ));
-
-        mFavImage.setOnClickListener(v -> toggleLike());
-
-    }
-
-    private void toggleLike() {
-
-        if (mCurrentUser.getLikesList().contains(mPhotoKey)) {
-            //User has already liked this photo
-            Log.d(TAG, "User contained photo key " + mPhotoKey);
-            mCurrentPhoto.setLikes(mCurrentPhoto.getLikes() - 1);
-            mCurrentUser.getLikesList().remove(mPhotoKey);
-        } else {
-            //User hasn't liked this photo yet
-            Log.d(TAG, "toggleLike: User didn't have photo key: " + mPhotoKey);
-            mCurrentPhoto.setLikes(mCurrentPhoto.getLikes() + 1);
-            mCurrentUser.getLikesList().add(mPhotoKey);
-        }
-
-        Log.d(TAG, "toggleLike: Likes: "+mCurrentPhoto.getLikes());
-
-        //Update Firebase
-        RxFirebaseDatabase.setValue(mPhotoReference,mCurrentPhoto)
-                .mergeWith(RxFirebaseDatabase.setValue(mUserReference,mCurrentUser))
-                .subscribe(() -> {});
-
-//        mPhotoReference.setValue(mCurrentPhoto);
-//        mUserReference.setValue(mCurrentUser);
-//        mLikesText.setText("Likes: " + mCurrentPhoto.getLikes());
-
     }
 
     @Override
     protected void onDestroy() {
         super.onDestroy();
-        mCompositeDisposable.clear();
+        Log.d(TAG, "onDestroy: cleaning up");
+        mPresenter.cleanUp();
     }
 }

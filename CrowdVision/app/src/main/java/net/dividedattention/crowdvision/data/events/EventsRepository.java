@@ -6,6 +6,8 @@ import android.net.Uri;
 import android.provider.MediaStore;
 import android.util.Log;
 
+import com.androidhuman.rxfirebase2.database.RxFirebaseDatabase;
+import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.storage.FirebaseStorage;
@@ -20,6 +22,7 @@ import net.dividedattention.crowdvision.data.User;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 
+import io.reactivex.Completable;
 import io.reactivex.Observable;
 
 /**
@@ -77,6 +80,15 @@ public class EventsRepository implements EventsDataSource {
     }
 
     @Override
+    public Completable changeLikeStatus(String photoPath, Photo photo, User user) {
+        DatabaseReference photoReference = FirebaseDatabase.getInstance().getReference().child(photoPath);
+        DatabaseReference userReference = FirebaseDatabase.getInstance().getReference().child("users/" + FirebaseAuth.getInstance().getCurrentUser().getUid());
+
+        return RxFirebaseDatabase.setValue(photoReference,photo)
+                .mergeWith(RxFirebaseDatabase.setValue(userReference,user));
+    }
+
+    @Override
     public void addPhoto() {
 
     }
@@ -102,12 +114,30 @@ public class EventsRepository implements EventsDataSource {
     }
 
     @Override
-    public Observable<Photo> getIndividualPhotos() {
-        return null;
+    public Observable<Photo> getIndividualPhoto(String photoPath) {
+        DatabaseReference photoReference = FirebaseDatabase.getInstance().getReference().child(photoPath);
+
+        return RxFirebaseDatabase
+                .dataChanges(photoReference)
+                .map(dataSnapshot -> dataSnapshot.getValue(Photo.class));
+
     }
 
     @Override
     public Observable<User> getUser() {
-        return null;
+        DatabaseReference userReference = FirebaseDatabase.getInstance().getReference().child("users/" + FirebaseAuth.getInstance().getCurrentUser().getUid());
+
+        return RxFirebaseDatabase
+                .dataChanges(userReference)
+                .map(dataSnapshot -> {
+                    User user = dataSnapshot.getValue(User.class);
+
+                    //Create user object if it doesn't exist in Firebase
+                    if (user == null)
+                        user = new User();
+
+                    Log.d(TAG, "flatmap user: retrieved user");
+                    return user;
+                });
     }
 }
