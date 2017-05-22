@@ -24,11 +24,13 @@ public interface EventsDataSource {
 
     Completable changeLikeStatus(String photoPath, Photo photo, User user);
 
+    int updateCachedPhoto(CrowdEvent event);
+
     rx.Observable addPhotoToEvent(String eventKey, Uri uri);
 
     Bitmap getImageFromGallery(Uri uri);
 
-    Observable<CrowdEvent> getEvents();
+    Observable<ChildEvent> getEvents();
 
     Single<CrowdEvent> getSingleEvent(String eventKey);
 

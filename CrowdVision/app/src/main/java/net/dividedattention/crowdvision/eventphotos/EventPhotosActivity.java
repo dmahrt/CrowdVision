@@ -78,7 +78,7 @@ public class EventPhotosActivity extends AppCompatActivity implements PhotoClick
         mPhotos = new ArrayList<>();
 
         mAdapter = new EventPhotosRecyclerViewAdapter(mPhotos, this);
-        mAdapter.setHasStableIds(true);
+        //mAdapter.setHasStableIds(true);
         mRecyclerView = (RecyclerView) findViewById(R.id.photos_recycler);
         GridLayoutManager gridLayoutManager = new GridLayoutManager(this,2);
         mRecyclerView.setHasFixedSize(true);

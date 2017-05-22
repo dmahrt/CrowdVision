@@ -320,4 +320,29 @@ public class EventListActivity extends AppCompatActivity implements GoogleApiCli
             currentFragment.showAddedEvent();
         }
     }
+
+    @Override
+    public void showUpdatedNearbyEvent(int position) {
+        EventListFragment currentFragment = (EventListFragment) findFragmentByPosition(0);
+        if (currentFragment != null) {
+            currentFragment.showUpdatedEvent(position);
+        }
+    }
+
+    @Override
+    public void showUpdatedRemoteEvent(int position) {
+        EventListFragment currentFragment = (EventListFragment) findFragmentByPosition(1);
+        if (currentFragment != null) {
+            currentFragment.showUpdatedEvent(position);
+        }
+    }
+
+    @Override
+    public void showUpdatedExpiredEvent(int position) {
+        EventListFragment currentFragment = (EventListFragment) findFragmentByPosition(2);
+        if (currentFragment != null) {
+            currentFragment.showUpdatedEvent(position);
+        }
+    }
+
 }

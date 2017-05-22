@@ -2,6 +2,9 @@ package net.dividedattention.crowdvision.eventlist;
 
 import android.util.Log;
 
+import com.androidhuman.rxfirebase2.database.ChildAddEvent;
+import com.androidhuman.rxfirebase2.database.ChildChangeEvent;
+
 import net.dividedattention.crowdvision.data.CrowdEvent;
 import net.dividedattention.crowdvision.data.events.EventsDataSource;
 
@@ -42,17 +45,27 @@ public class EventListPresenter implements EventListContract.Presenter {
 
         mDataSource
                 .getEvents()
-                .subscribe(event -> {
+                .subscribe(childEvent -> {
+                    CrowdEvent event = childEvent.dataSnapshot().getValue(CrowdEvent.class);
                     boolean isNearby = testNearby(event.getCity(),event.getState());
                     boolean isCurrent = testCurrentEvent(event.getEndDate());
 
-                    if(mDataSource.cacheEvent(event,isNearby,isCurrent)){
+
+                    if(childEvent instanceof ChildAddEvent && mDataSource.cacheEvent(event,isNearby,isCurrent)){
                         if(isNearby && isCurrent)
                             mView.showNearbyEvent(event);
                         else if(isCurrent)
                             mView.showRemoteEvent(event);
                         else
                             mView.showExpiredEvent(event);
+                    } else if(childEvent instanceof ChildChangeEvent){
+                        mDataSource.updateCachedPhoto(event);
+                        if(isNearby && isCurrent)
+                            mView.showUpdatedNearbyEvent(mDataSource.getNearbyEvents().indexOf(event));
+                        else if(isCurrent)
+                            mView.showUpdatedRemoteEvent(mDataSource.getRemoteEvents().indexOf(event));
+                        else
+                            mView.showUpdatedExpiredEvent(mDataSource.getExpiredEvents().indexOf(event));
                     }
                 }, throwable -> throwable.printStackTrace());
     }

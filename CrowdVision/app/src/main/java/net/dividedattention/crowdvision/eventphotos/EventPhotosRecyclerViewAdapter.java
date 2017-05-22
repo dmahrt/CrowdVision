@@ -35,16 +35,18 @@ public class EventPhotosRecyclerViewAdapter extends RecyclerView.Adapter<EventPh
     @Override
     public ImageViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
         LayoutInflater inflater = LayoutInflater.from(parent.getContext());
-        return new ImageViewHolder(inflater.inflate(R.layout.photo_layout,parent,false));
+        return new ImageViewHolder(inflater.inflate(R.layout.photo_layout, parent, false));
     }
 
     @Override
     public void onBindViewHolder(final ImageViewHolder imageViewHolder, final int position) {
-        Log.d(TAG, "onBindViewHolder: Entering "+ mPhotoList.get(position).getHeight());
+
+        Log.d(TAG, "onBindViewHolder: url: " + mPhotoList.get(position).getPhotoUrl());
+        Log.d(TAG, "onBindViewHolder: "+imageViewHolder.getAdapterPosition());
 
         imageViewHolder.progressBar.setVisibility(View.VISIBLE);
         Glide.with(imageViewHolder.imageView.getContext())
-                .load(mPhotoList.get(position).getPhotoUrl())
+                .load(mPhotoList.get(imageViewHolder.getAdapterPosition()).getPhotoUrl())
                 .thumbnail(0.2f)
                 .listener(new RequestListener<String, GlideDrawable>() {
                     @Override
@@ -61,13 +63,13 @@ public class EventPhotosRecyclerViewAdapter extends RecyclerView.Adapter<EventPh
                 })
                 .into(imageViewHolder.imageView);
 
-        ViewCompat.setTransitionName(imageViewHolder.imageView,position+"_image");
+        ViewCompat.setTransitionName(imageViewHolder.imageView, position + "_image");
 
         imageViewHolder.imageView.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 int currentPosition = imageViewHolder.getAdapterPosition();
-                mListener.onPhotoClicked(mPhotoList.get(currentPosition).getPhotoUrl(),imageViewHolder.imageView,position,mPhotoList.get(currentPosition).getKey());
+                mListener.onPhotoClicked(mPhotoList.get(currentPosition).getPhotoUrl(), imageViewHolder.imageView, position, mPhotoList.get(currentPosition).getKey());
             }
         });
     }
@@ -78,8 +80,8 @@ public class EventPhotosRecyclerViewAdapter extends RecyclerView.Adapter<EventPh
     }
 
 
-    public void addPhoto(Photo photo){
-        mPhotoList.add(0,photo);
+    public void addPhoto(Photo photo) {
+        mPhotoList.add(0, photo);
         notifyItemInserted(0);
     }
 
@@ -89,8 +91,8 @@ public class EventPhotosRecyclerViewAdapter extends RecyclerView.Adapter<EventPh
 
         public ImageViewHolder(View itemView) {
             super(itemView);
-            imageView = (ImageView)itemView.findViewById(R.id.image);
-            progressBar = (ProgressBar)itemView.findViewById(R.id.progress_bar);
+            imageView = (ImageView) itemView.findViewById(R.id.image);
+            progressBar = (ProgressBar) itemView.findViewById(R.id.progress_bar);
         }
     }
 

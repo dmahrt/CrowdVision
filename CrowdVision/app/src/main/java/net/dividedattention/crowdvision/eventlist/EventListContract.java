@@ -15,6 +15,9 @@ public interface EventListContract {
         void showNearbyEvent(CrowdEvent event);
         void showRemoteEvent(CrowdEvent event);
         void showExpiredEvent(CrowdEvent event);
+        void showUpdatedNearbyEvent(int position);
+        void showUpdatedRemoteEvent(int position);
+        void showUpdatedExpiredEvent(int position);
     }
 
     interface Presenter extends BasePresenter{

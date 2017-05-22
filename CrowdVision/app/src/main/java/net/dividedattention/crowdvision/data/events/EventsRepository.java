@@ -113,6 +113,28 @@ public class EventsRepository implements EventsDataSource {
     }
 
     @Override
+    public int updateCachedPhoto(CrowdEvent event) {
+        int eventIndex = -1;
+
+        eventIndex = mCurrentEvents.indexOf(event);
+        if(eventIndex >= 0) {
+            mCurrentEvents.set(eventIndex,event);
+        }
+
+        eventIndex = mRemoteEvents.indexOf(event);
+        if(eventIndex >= 0) {
+            mRemoteEvents.set(eventIndex,event);
+        }
+
+        eventIndex = mExpiredEvents.indexOf(event);
+        if(eventIndex >= 0) {
+            mExpiredEvents.set(eventIndex,event);
+        }
+
+        return eventIndex;
+    }
+
+    @Override
     public rx.Observable addPhotoToEvent(String eventKey, Uri uri) {
 
         try {
@@ -160,12 +182,10 @@ public class EventsRepository implements EventsDataSource {
     }
 
     @Override
-    public Observable<CrowdEvent> getEvents() {
+    public Observable<ChildEvent> getEvents() {
         DatabaseReference eventsRef = FirebaseDatabase.getInstance().getReference().child("events");
         return RxFirebaseDatabase
-                .childEvents(eventsRef)
-                .ofType(ChildAddEvent.class)
-                .map(childAddEvent -> childAddEvent.dataSnapshot().getValue(CrowdEvent.class));
+                .childEvents(eventsRef);
     }
 
     @Override

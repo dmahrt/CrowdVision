@@ -54,6 +54,12 @@ public class EventListFragment extends Fragment {
         }
     }
 
+    public void showUpdatedEvent(int position){
+        if(mAdapter != null){
+            mAdapter.notifyItemChanged(position);
+        }
+    }
+
     public void setEvents(List<CrowdEvent> events){
         mEventList = events;
         if(mAdapter != null){
