@@ -16,7 +16,7 @@
 
         <!-- Activities -->
         <activity
-            android:name=".activities.EventListActivity"
+            android:name=".eventlist.EventListActivity"
             android:label="@string/app_name"
             android:theme="@style/AppTheme.NoActionBar">
             <intent-filter>
@@ -25,28 +25,28 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-        <activity android:name=".activities.CreateEventActivity" />
+        <activity android:name=".eventcreate.CreateEventActivity" />
         <activity
-            android:name=".activities.EventPhotosActivity"
+            android:name=".eventphotos.EventPhotosActivity"
             android:label="@string/title_activity_event_photos"
-            android:parentActivityName=".activities.EventListActivity"
+            android:parentActivityName=".eventlist.EventListActivity"
             android:theme="@style/AppTheme.NoActionBar" />
         <activity
-            android:name=".activities.LoginActivity"
+            android:name=".login.LoginActivity"
             android:theme="@style/LoginTheme" />
-        <activity android:name=".activities.ExpandedPhotoActivity"
+        <activity android:name=".expandedphoto.ExpandedPhotoActivity"
             android:theme="@style/AppTheme.NoActionBar"/>
 
 
         <!-- Services -->
 
-        <service android:name=".services.MyFirebaseMessagingService">
+        <service android:name=".data.services.MyFirebaseMessagingService">
             <intent-filter>
                 <action android:name="com.google.firebase.MESSAGING_EVENT" />
             </intent-filter>
         </service>
         <service
-            android:name=".services.FetchAddressIntentService"
+            android:name=".data.services.FetchAddressIntentService"
             android:exported="false" />
 
         <!-- Meta-Data -->
@@ -61,7 +61,7 @@
             android:name="com.facebook.sdk.ApplicationId"
             android:value="@string/facebook_application_id" />
         <meta-data
-            android:name="net.dividedattention.crowdvision.GlideConfiguration"
+            android:name="net.dividedattention.crowdvision.util.GlideConfiguration"
             android:value="GlideModule" />
 
     </application>
