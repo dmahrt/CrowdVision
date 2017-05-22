@@ -69,7 +69,8 @@ public class ExpandedPhotoPresenter implements ExpandedPhotoContract.Presenter {
                             Log.d(TAG, "subscribed: Likes: "+mCurrentPhoto.getLikes());
                             mView.showImage(mCurrentPhoto.getPhotoUrl());
                             mView.showUpdatedLikeCount(mCurrentPhoto.getLikes());
-                        }
+                        },
+                                throwable -> Log.d(TAG, "loadImageData: Error loading photo")
                 )
         );
 
@@ -79,7 +80,9 @@ public class ExpandedPhotoPresenter implements ExpandedPhotoContract.Presenter {
                 .subscribe(user -> {
                     mCurrentUser = user;
                     mView.showUpdatedLikeButton(mCurrentUser.getLikesList().contains(mPhotoKey));
-                })
+                },
+                        throwable -> Log.d(TAG, "loadImageData: error loading user")
+                )
         );
     }
 

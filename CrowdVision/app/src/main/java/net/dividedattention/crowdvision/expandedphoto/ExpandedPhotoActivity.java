@@ -43,7 +43,6 @@ public class ExpandedPhotoActivity extends AppCompatActivity implements Expanded
 
         mPresenter = new ExpandedPhotoPresenter(this, EventsRepository.getInstance(this));
 
-        String photoUrl = getIntent().getStringExtra(PHOTO_URL_KEY);
         ImageView imageView = (ImageView) findViewById(R.id.image);
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
             imageView.setTransitionName(getIntent().getStringExtra(TRANSITION_KEY));

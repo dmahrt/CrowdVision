@@ -17,7 +17,6 @@ import com.bumptech.glide.request.RequestListener;
 import net.dividedattention.crowdvision.data.Photo;
 import net.dividedattention.crowdvision.R;
 
-import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -26,13 +25,11 @@ import java.util.List;
 public class EventPhotosRecyclerViewAdapter extends RecyclerView.Adapter<EventPhotosRecyclerViewAdapter.ImageViewHolder> {
     private static final String TAG = "RecyclerViewAdapter";
     private PhotoClickListener mListener;
-    private List<Photo> mItems;
-    private List<String> mKeys;
+    private List<Photo> mPhotoList;
 
     public EventPhotosRecyclerViewAdapter(List items, PhotoClickListener listener) {
         mListener = listener;
-        mItems = items;
-        mKeys = new ArrayList<>();
+        mPhotoList = items;
     }
 
     @Override
@@ -43,36 +40,11 @@ public class EventPhotosRecyclerViewAdapter extends RecyclerView.Adapter<EventPh
 
     @Override
     public void onBindViewHolder(final ImageViewHolder imageViewHolder, final int position) {
-        Log.d(TAG, "onBindViewHolder: Entering "+mItems.get(position).getHeight());
+        Log.d(TAG, "onBindViewHolder: Entering "+ mPhotoList.get(position).getHeight());
 
-//        if(mItems.get(position).getHeight() > 0){
-//            Log.d(TAG, "onBindViewHolder: retrieving bounds");
-//            RelativeLayout.LayoutParams rlp = (RelativeLayout.LayoutParams)imageViewHolder.imageView.getLayoutParams();
-//            float ratio = mItems.get(position).getHeight()/mItems.get(position).getWidth();
-//            rlp.height = (int)(rlp.width * ratio);
-//            imageViewHolder.imageView.setLayoutParams(rlp);
-//        }
-
-//        Picasso.with(imageViewHolder.imageView.getContext())
-//                .load(mItems.get(position).getPhotoUrl())
-//                .into(imageViewHolder.imageView, new Callback() {
-//                    @Override
-//                    public void onSuccess() {
-//                        float width = imageViewHolder.imageView.getWidth();
-//                        float height = imageViewHolder.imageView.getHeight();
-//                        Log.d(TAG, "onResourceReady: Setting image bounds "+position+" with height "+height);
-//                        mItems.get(position).setHeight(height);
-//                        mItems.get(position).setWidth(width);
-//                    }
-//
-//                    @Override
-//                    public void onError() {
-//
-//                    }
-//                });
         imageViewHolder.progressBar.setVisibility(View.VISIBLE);
         Glide.with(imageViewHolder.imageView.getContext())
-                .load(mItems.get(position).getPhotoUrl())
+                .load(mPhotoList.get(position).getPhotoUrl())
                 .thumbnail(0.2f)
                 .listener(new RequestListener<String, GlideDrawable>() {
                     @Override
@@ -94,30 +66,22 @@ public class EventPhotosRecyclerViewAdapter extends RecyclerView.Adapter<EventPh
         imageViewHolder.imageView.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                mListener.onPhotoClicked(mItems.get(position).getPhotoUrl(),imageViewHolder.imageView,position,mKeys.get(position));
+                int currentPosition = imageViewHolder.getAdapterPosition();
+                mListener.onPhotoClicked(mPhotoList.get(currentPosition).getPhotoUrl(),imageViewHolder.imageView,position,mPhotoList.get(currentPosition).getKey());
             }
         });
     }
 
     @Override
-    public long getItemId(int position) {
-        return mKeys.get(position).hashCode();
-    }
-
-    @Override
     public int getItemCount() {
-        return mItems.size();
+        return mPhotoList.size();
     }
 
-    public void addKey(int i, String s) {
-        mKeys.add(i,s);
-    }
 
-    public String getKey(int i){
-        return mKeys.get(i);
+    public void addPhoto(Photo photo){
+        mPhotoList.add(0,photo);
+        notifyItemInserted(0);
     }
-
-    public void removeKey(int i){ mKeys.remove(i); }
 
     public static class ImageViewHolder extends RecyclerView.ViewHolder {
         public ImageView imageView;

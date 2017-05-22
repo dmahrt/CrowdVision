@@ -5,6 +5,8 @@ package net.dividedattention.crowdvision.data;
  */
 public class Photo {
     String photoUrl;
+
+    String key;
     int likes;
     float height;
     float width;
@@ -58,5 +60,13 @@ public class Photo {
 
     public void setLikes(int likes) {
         this.likes = likes;
+    }
+
+    public String getKey() {
+        return key;
+    }
+
+    public void setKey(String key) {
+        this.key = key;
     }
 }

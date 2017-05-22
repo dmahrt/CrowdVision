@@ -11,6 +11,7 @@ import java.util.List;
 
 import io.reactivex.Completable;
 import io.reactivex.Observable;
+import io.reactivex.Single;
 
 /**
  * Created by drewmahrt on 5/15/17.
@@ -21,13 +22,15 @@ public interface EventsDataSource {
 
     Completable changeLikeStatus(String photoPath, Photo photo, User user);
 
-    void addPhoto();
+    rx.Observable addPhotoToEvent(String eventKey, Uri uri);
 
     Bitmap getImageFromGallery(Uri uri);
 
     Observable<CrowdEvent> getEvents();
 
-    Observable<Photo> getPhotos();
+    Single<CrowdEvent> getSingleEvent(String eventKey);
+
+    Observable<Photo> getPhotos(String eventKey);
 
     Observable<Photo> getIndividualPhoto(String photoPath);
 

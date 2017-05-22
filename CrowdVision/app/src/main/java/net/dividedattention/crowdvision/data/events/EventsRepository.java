@@ -4,26 +4,39 @@ import android.content.Context;
 import android.graphics.Bitmap;
 import android.net.Uri;
 import android.provider.MediaStore;
+import android.support.annotation.NonNull;
 import android.util.Log;
+import android.view.View;
+import android.widget.Toast;
 
+import com.androidhuman.rxfirebase2.database.ChildAddEvent;
 import com.androidhuman.rxfirebase2.database.RxFirebaseDatabase;
+import com.google.android.gms.tasks.OnFailureListener;
+import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.database.DataSnapshot;
+import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.database.ValueEventListener;
 import com.google.firebase.storage.FirebaseStorage;
 import com.google.firebase.storage.StorageReference;
+import com.google.firebase.storage.UploadTask;
 import com.kelvinapps.rxfirebase.RxFirebaseStorage;
 
 import net.dividedattention.crowdvision.R;
 import net.dividedattention.crowdvision.data.CrowdEvent;
 import net.dividedattention.crowdvision.data.Photo;
 import net.dividedattention.crowdvision.data.User;
+import net.dividedattention.crowdvision.eventphotos.EventPhotosActivity;
 
 import java.io.ByteArrayOutputStream;
+import java.io.File;
 import java.io.IOException;
 
 import io.reactivex.Completable;
 import io.reactivex.Observable;
+import io.reactivex.Single;
 
 /**
  * Created by drewmahrt on 5/15/17.
@@ -89,9 +102,41 @@ public class EventsRepository implements EventsDataSource {
     }
 
     @Override
-    public void addPhoto() {
+    public rx.Observable addPhotoToEvent(String eventKey, Uri uri) {
+
+        try {
+            Bitmap selectedImage = MediaStore.Images.Media.getBitmap(mContext.getContentResolver(), uri);
+            FirebaseStorage storage = FirebaseStorage.getInstance();
+            StorageReference storageRef = storage.getReferenceFromUrl(mContext.getString(R.string.firebase_storage));
+            StorageReference spaceRef = storageRef.child("images/"+System.currentTimeMillis() + "_" + selectedImage.getByteCount()+".jpg");
+
+            DatabaseReference photosRef = FirebaseDatabase.getInstance().getReference().child("events/"+eventKey+"/photos");
+
+            Log.d(TAG, "onActivityResult: Attempting to upload image");
+
+            ByteArrayOutputStream baos = new ByteArrayOutputStream();
+            selectedImage.compress(Bitmap.CompressFormat.JPEG,50,baos);
+            final byte[] imageData = baos.toByteArray();
+
+
+            return RxFirebaseStorage.putBytes(spaceRef, imageData)
+                    .flatMap(taskSnapshot -> {
+                        Uri downloadUrl = taskSnapshot.getDownloadUrl();
+                        String imagePath = downloadUrl.toString();
+                        Log.d(TAG, "onSuccess: " + imagePath);
+
+                        Photo photo = new Photo(imagePath,0);
+                        DatabaseReference subRef = photosRef.push();
+                        photo.setKey(subRef.getKey());
+                        return rx.Observable.just(subRef.setValue(photo));
+                    });
+        } catch (IOException e) {
+            e.printStackTrace();
+            return rx.Observable.error(e);
+        }
 
     }
+
 
     @Override
     public Bitmap getImageFromGallery(Uri uri) {
@@ -109,8 +154,21 @@ public class EventsRepository implements EventsDataSource {
     }
 
     @Override
-    public Observable<Photo> getPhotos() {
-        return null;
+    public Single<CrowdEvent> getSingleEvent(String eventKey) {
+        DatabaseReference eventRef = FirebaseDatabase.getInstance().getReference().child("events/"+eventKey);
+
+        return RxFirebaseDatabase
+                .dataOf(eventRef,CrowdEvent.class);
+    }
+
+    @Override
+    public Observable<Photo> getPhotos(String eventKey) {
+        DatabaseReference photosRef = FirebaseDatabase.getInstance().getReference().child("events/"+eventKey+"/photos");
+        return RxFirebaseDatabase
+                .childEvents(photosRef)
+                .ofType(ChildAddEvent.class)
+                .map(childEvent -> childEvent.dataSnapshot().getValue(Photo.class));
+
     }
 
     @Override
