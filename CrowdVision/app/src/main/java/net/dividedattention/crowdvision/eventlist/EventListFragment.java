@@ -45,33 +45,17 @@ public class EventListFragment extends Fragment {
         mRecyclerView.setLayoutManager(new LinearLayoutManager(getContext(),LinearLayoutManager.VERTICAL,false));
 
         mAdapter = new EventListRecyclerViewAdapter(mEventList);
-        //Log.d(TAG, "onViewCreated: Adapter Created with num events "+mEventList.size());
         mRecyclerView.setAdapter(mAdapter);
     }
 
-    public void addEvent(CrowdEvent event){
-        Log.d(TAG, "addEvent: "+(mAdapter==null));
+    public void showAddedEvent(){
         if(mAdapter != null) {
-            Log.d(TAG, "addEvent: Notifying adapter "+(mEventList.size()-1)+"  SIZE: "+mEventList.size());
             mAdapter.notifyItemInserted(mEventList.size() - 1);
         }
     }
 
-    public void modifyEvent(int position, CrowdEvent event){
-        Log.d(TAG, "modifyEvent: "+(mAdapter==null));
-        if(mAdapter != null)
-            mAdapter.notifyItemChanged(position);
-    }
-
-    public void removeEvent(int position){
-        Log.d(TAG, "removeEvent: "+(mAdapter==null));
-        if(mAdapter != null)
-            mAdapter.notifyItemRemoved(position);
-    }
-
     public void setEvents(List<CrowdEvent> events){
         mEventList = events;
-        Log.d(TAG, "setEvents: size "+events.size());
         if(mAdapter != null){
             mAdapter.swapData(events);
         }

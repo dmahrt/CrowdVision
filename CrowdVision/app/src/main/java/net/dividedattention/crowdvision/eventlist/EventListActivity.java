@@ -5,7 +5,6 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.SharedPreferences;
-import android.content.pm.PackageManager;
 import android.location.Location;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
@@ -15,7 +14,6 @@ import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.TabLayout;
-import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.Fragment;
 import android.support.v4.os.ResultReceiver;
 import android.support.v4.view.ViewPager;
@@ -34,13 +32,9 @@ import com.google.android.gms.location.LocationServices;
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
 import com.google.firebase.auth.FirebaseAuth;
-import com.google.firebase.database.ChildEventListener;
-import com.google.firebase.database.DataSnapshot;
-import com.google.firebase.database.DatabaseError;
-import com.google.firebase.database.DatabaseReference;
-import com.google.firebase.database.FirebaseDatabase;
 import com.tbruyelle.rxpermissions2.RxPermissions;
 
+import net.dividedattention.crowdvision.data.events.EventsRepository;
 import net.dividedattention.crowdvision.eventcreate.CreateEventActivity;
 import net.dividedattention.crowdvision.login.LoginActivity;
 import net.dividedattention.crowdvision.util.AddressServiceConstants;
@@ -49,16 +43,9 @@ import net.dividedattention.crowdvision.R;
 import net.dividedattention.crowdvision.data.receivers.ConnectionBroadcastReceiver;
 import net.dividedattention.crowdvision.data.services.FetchAddressIntentService;
 
-import java.text.ParseException;
-import java.text.SimpleDateFormat;
-import java.util.ArrayList;
-import java.util.Calendar;
-import java.util.Date;
-
-public class EventListActivity extends AppCompatActivity implements GoogleApiClient.ConnectionCallbacks, GoogleApiClient.OnConnectionFailedListener, ConnectionBroadcastReceiver.ConnectionChangeListener {
+public class EventListActivity extends AppCompatActivity implements GoogleApiClient.ConnectionCallbacks, GoogleApiClient.OnConnectionFailedListener, ConnectionBroadcastReceiver.ConnectionChangeListener, EventListContract.View {
     private static final String TAG = "EventListActivity";
-
-    private DatabaseReference mFirebaseRef;
+    private EventListContract.Presenter mPresenter;
     private EventListPagerAdapter mPagerAdapter;
     private ViewPager mEventsViewPager;
 
@@ -69,9 +56,6 @@ public class EventListActivity extends AppCompatActivity implements GoogleApiCli
 
     private ConnectionBroadcastReceiver mConnectionReceiver;
 
-    private ArrayList<CrowdEvent> mCurrentEvents, mRemoteEvents, mExpiredEvents;
-
-
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -80,15 +64,17 @@ public class EventListActivity extends AppCompatActivity implements GoogleApiCli
         toolbar.setTitle(getString(R.string.event_list_activity_title));
         setSupportActionBar(toolbar);
 
+        mPresenter = new EventListPresenter(this, EventsRepository.getInstance(this));
+
         //Check if user is logged in
         FirebaseAuth auth = FirebaseAuth.getInstance();
         if (auth.getCurrentUser() == null) {
             //If user is not logged in, go to Login Activity
-            startActivity(new Intent(this,LoginActivity.class));
+            startActivity(new Intent(this, LoginActivity.class));
             finish();
             return;
         }
-        
+
         FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.fab);
         fab.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -102,10 +88,6 @@ public class EventListActivity extends AppCompatActivity implements GoogleApiCli
             checkLocationPermission();
         });
 
-        mCurrentEvents = new ArrayList<>();
-        mRemoteEvents = new ArrayList<>();
-        mExpiredEvents = new ArrayList<>();
-
         // Create an instance of GoogleAPIClient.
         if (mGoogleApiClient == null) {
             mGoogleApiClient = new GoogleApiClient.Builder(this)
@@ -115,14 +97,14 @@ public class EventListActivity extends AppCompatActivity implements GoogleApiCli
                     .build();
         }
 
-        mPagerAdapter = new EventListPagerAdapter(getSupportFragmentManager(),mCurrentEvents,mRemoteEvents,mExpiredEvents);
+        mPagerAdapter = new EventListPagerAdapter(getSupportFragmentManager(), mPresenter.getNearbyEvents(), mPresenter.getRemoteEvents(), mPresenter.getExpiredEvents());
         mEventsViewPager = (ViewPager) findViewById(R.id.events_viewpager);
         mEventsViewPager.setAdapter(mPagerAdapter);
-        TabLayout tabLayout = (TabLayout)findViewById(R.id.tablayout);
+        TabLayout tabLayout = (TabLayout) findViewById(R.id.tablayout);
         tabLayout.setupWithViewPager(mEventsViewPager);
     }
 
-    private void checkLocationPermission(){
+    private void checkLocationPermission() {
         View locationLayout = findViewById(R.id.request_location_layout);
         View fab = findViewById(R.id.fab);
         View tabs = findViewById(R.id.tablayout);
@@ -131,13 +113,13 @@ public class EventListActivity extends AppCompatActivity implements GoogleApiCli
         rxPermissions
                 .request(Manifest.permission.ACCESS_FINE_LOCATION)
                 .subscribe(granted -> {
-                    if(granted){
+                    if (granted) {
                         locationLayout.setVisibility(View.GONE);
                         mEventsViewPager.setVisibility(View.VISIBLE);
                         fab.setVisibility(View.VISIBLE);
                         tabs.setVisibility(View.VISIBLE);
                         mGoogleApiClient.connect();
-                    }else {
+                    } else {
                         locationLayout.setVisibility(View.VISIBLE);
                         fab.setVisibility(View.GONE);
                         tabs.setVisibility(View.GONE);
@@ -149,45 +131,35 @@ public class EventListActivity extends AppCompatActivity implements GoogleApiCli
     @Override
     protected void onSaveInstanceState(Bundle outState) {
         super.onSaveInstanceState(outState);
-        outState.putParcelableArrayList("current",mCurrentEvents);
-        outState.putParcelableArrayList("remote",mRemoteEvents);
-        outState.putParcelableArrayList("expired",mExpiredEvents);
-        outState.putInt("position",mEventsViewPager.getCurrentItem());
+        outState.putInt("position", mEventsViewPager.getCurrentItem());
     }
 
     @Override
     protected void onRestoreInstanceState(Bundle savedInstanceState) {
-        mCurrentEvents = savedInstanceState.getParcelableArrayList("current");
-        mRemoteEvents = savedInstanceState.getParcelableArrayList("remote");
-        mExpiredEvents = savedInstanceState.getParcelableArrayList("expired");
         mEventsViewPager.setCurrentItem(savedInstanceState.getInt("position"));
     }
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
-        // Inflate the menu; this adds items to the action bar if it is present.
         getMenuInflater().inflate(R.menu.menu_event_list, menu);
         return true;
     }
 
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
-        // Handle action bar item clicks here. The action bar will
-        // automatically handle clicks on the Home/Up button, so long
-        // as you specify a parent activity in AndroidManifest.xml.
-        int id = item.getItemId();
-
-        //noinspection SimplifiableIfStatement
-        if (id == R.id.action_logout) {
-            AuthUI.getInstance()
-                    .signOut(this)
-                    .addOnCompleteListener(new OnCompleteListener<Void>() {
-                        public void onComplete(@NonNull Task<Void> task) {
-                            // user is now signed out
-                            startActivity(new Intent(EventListActivity.this, LoginActivity.class));
-                            finish();
-                        }
-                    });
+        switch (item.getItemId()) {
+            case R.id.action_logout:
+                mPresenter.cleanUp();
+                AuthUI.getInstance()
+                        .signOut(this)
+                        .addOnCompleteListener(new OnCompleteListener<Void>() {
+                            public void onComplete(@NonNull Task<Void> task) {
+                                // user is now signed out
+                                startActivity(new Intent(EventListActivity.this, LoginActivity.class));
+                                finish();
+                            }
+                        });
+                break;
         }
 
         return super.onOptionsItemSelected(item);
@@ -195,24 +167,32 @@ public class EventListActivity extends AppCompatActivity implements GoogleApiCli
 
     @Override
     public void onConnected(@Nullable Bundle bundle) {
-        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
-            // TODO: Consider calling
-            //    ActivityCompat#requestPermissions
-            // here to request the missing permissions, and then overriding
-            //   public void onRequestPermissionsResult(int requestCode, String[] permissions,
-            //                                          int[] grantResults)
-            // to handle the case where the user grants the permission. See the documentation
-            // for ActivityCompat#requestPermissions for more details.
-            return;
-        }else {
-            mLastLocation = LocationServices.FusedLocationApi.getLastLocation(
-                    mGoogleApiClient);
-            if (mLastLocation != null) {
-                startIntentService(mLastLocation);
-            } else {
-                Toast.makeText(this, "Could not find location", Toast.LENGTH_SHORT).show();
-            }
-        }
+        RxPermissions rxPermissions = new RxPermissions(this);
+        rxPermissions
+                .request(Manifest.permission.ACCESS_FINE_LOCATION)
+                .subscribe(granted -> {
+                    mLastLocation = LocationServices.FusedLocationApi.getLastLocation(mGoogleApiClient);
+                    if (mLastLocation != null)
+                        startIntentService(mLastLocation);
+                });
+//        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+//            // TODO: Consider calling
+//            //    ActivityCompat#requestPermissions
+//            // here to request the missing permissions, and then overriding
+//            //   public void onRequestPermissionsResult(int requestCode, String[] permissions,
+//            //                                          int[] grantResults)
+//            // to handle the case where the user grants the permission. See the documentation
+//            // for ActivityCompat#requestPermissions for more details.
+//            return;
+//        } else {
+//            mLastLocation = LocationServices.FusedLocationApi.getLastLocation(
+//                    mGoogleApiClient);
+//            if (mLastLocation != null) {
+//                startIntentService(mLastLocation);
+//            } else {
+//                Toast.makeText(this, "Could not find location", Toast.LENGTH_SHORT).show();
+//            }
+//        }
     }
 
     @Override
@@ -225,150 +205,12 @@ public class EventListActivity extends AppCompatActivity implements GoogleApiCli
         Toast.makeText(this, "Connection failed", Toast.LENGTH_SHORT).show();
     }
 
-    private boolean testNearby(String city, String state){
-        return mCity.equals(city) && mState.equals(state);
-    }
-
-    private boolean testCurrentEvent(String date){
-        SimpleDateFormat sdf = new SimpleDateFormat("MM/dd/yyyy");
-        Date currentDateFormatted, eventDate;
-
-        Date currentDate = new Date();
-        Calendar cal = Calendar.getInstance();
-        cal.setTime(currentDate);
-
-        try {
-            int month = cal.get(Calendar.MONTH) + 1;
-            int day = cal.get(Calendar.DAY_OF_MONTH);
-            int year = cal.get(Calendar.YEAR);
-
-            currentDateFormatted = sdf.parse(month+"/"+day+"/"+year);
-            eventDate = sdf.parse(date);
-            Log.d(TAG, "testCurrentEvent: Event: "+eventDate.toString()+" Current: "+currentDateFormatted.toString());
-            return !currentDateFormatted.after(eventDate);
-        } catch (ParseException e) {
-            e.printStackTrace();
-        }
-
-        return true;
-    }
-
-    private void createEventLists(){
-        mFirebaseRef = FirebaseDatabase.getInstance().getReference().child("events");
-        mFirebaseRef.addChildEventListener(new ChildEventListener() {
-            @Override
-            public void onChildAdded(DataSnapshot dataSnapshot, String s) {
-                Log.d(EventListActivity.class.getName(), "Key added: " + dataSnapshot.getKey());
-                CrowdEvent event = dataSnapshot.getValue(CrowdEvent.class);
-                boolean isCurrentEvent = testCurrentEvent(event.getEndDate());
-                boolean isNearby = testNearby(event.getCity(),event.getState());
-
-                EventListFragment currentFragment = null;
-
-                if(!isCurrentEvent){
-                    Log.d(TAG, "onChildAdded: Expired");
-                    if(!mExpiredEvents.contains(event)) {
-                        mExpiredEvents.add(event);
-                        currentFragment = (EventListFragment) findFragmentByPosition(2);
-                    }
-                } else if(isNearby) {
-                    Log.d(TAG, "onChildAdded: Nearby");
-                    if(!mCurrentEvents.contains(event)) {
-                        mCurrentEvents.add(event);
-                        currentFragment = (EventListFragment) findFragmentByPosition(0);
-                    }
-                }else {
-                    Log.d(TAG, "onChildAdded: Remote");
-                    if(!mRemoteEvents.contains(event)) {
-                        mRemoteEvents.add(event);
-                        currentFragment = (EventListFragment) findFragmentByPosition(1);
-                    }
-                }
-
-                if(currentFragment != null) {
-                    currentFragment.addEvent(event);
-                }
-            }
-
-            @Override
-            public void onChildChanged(DataSnapshot dataSnapshot, String s) {
-                CrowdEvent event = dataSnapshot.getValue(CrowdEvent.class);
-                boolean isCurrentEvent = testCurrentEvent(event.getEndDate());
-                boolean isNearby = testNearby(event.getCity(),event.getState());
-
-                EventListFragment currentFragment;
-                int position = -1;
-
-                Log.d(EventListActivity.class.getName(), "Key changed: " + dataSnapshot.getKey());
-                if(!isCurrentEvent) {
-                    currentFragment = (EventListFragment) findFragmentByPosition(2);
-                    position = mExpiredEvents.indexOf(event);
-                    mExpiredEvents.set(position,event);
-                } else if(isNearby) {
-                    currentFragment = (EventListFragment) findFragmentByPosition(0);
-                    position = mCurrentEvents.indexOf(event);
-                    mCurrentEvents.set(position,event);
-                }else {
-                    currentFragment = (EventListFragment) findFragmentByPosition(1);
-                    position = mRemoteEvents.indexOf(event);
-                    mRemoteEvents.set(position,event);
-                }
-
-                if(position >= 0 && currentFragment != null){
-                    currentFragment.modifyEvent(position,event);
-                }else{
-                    Log.d(TAG, "onChildRemoved: Error removing event");
-                }
-            }
-
-            @Override
-            public void onChildRemoved(DataSnapshot dataSnapshot) {
-                CrowdEvent event = dataSnapshot.getValue(CrowdEvent.class);
-                boolean isCurrentEvent = testCurrentEvent(event.getEndDate());
-                boolean isNearby = testNearby(event.getCity(),event.getState());
-
-                EventListFragment currentFragment;
-                int position = -1;
-
-                Log.d(EventListActivity.class.getName(), "Key removed: " + dataSnapshot.getKey());
-
-                if(!isCurrentEvent) {
-                    currentFragment = (EventListFragment) findFragmentByPosition(2);
-                    position = mExpiredEvents.indexOf(event);
-                    mExpiredEvents.remove(position);
-                } else if(isNearby) {
-                    currentFragment = (EventListFragment) findFragmentByPosition(0);
-                    position = mCurrentEvents.indexOf(event);
-                    mCurrentEvents.remove(position);
-                }else {
-                    currentFragment = (EventListFragment) findFragmentByPosition(1);
-                    position = mRemoteEvents.indexOf(event);
-                    mRemoteEvents.remove(position);
-                }
-
-                if(position >= 0 && currentFragment != null){
-                    currentFragment.removeEvent(position);
-                }else{
-                    Log.d(TAG, "onChildRemoved: Error removing event");
-                }
-            }
-
-            @Override
-            public void onChildMoved(DataSnapshot dataSnapshot, String s) {
-
-            }
-
-            @Override
-            public void onCancelled(DatabaseError databaseError) {
-
-            }
-        });
-    }
 
     @Override
     public void connectionResumed() {
         checkLocationPermission();
     }
+
 
     private class AddressResultReceiver extends ResultReceiver {
         public AddressResultReceiver(Handler handler) {
@@ -380,21 +222,22 @@ public class EventListActivity extends AppCompatActivity implements GoogleApiCli
 
             // Display the address string
             // or an error message sent from the intent service.
-            if(resultCode == AddressServiceConstants.SUCCESS_RESULT) {
+            if (resultCode == AddressServiceConstants.SUCCESS_RESULT) {
                 mCity = resultData.getString(AddressServiceConstants.RESULT_DATA_CITY);
                 mState = resultData.getString(AddressServiceConstants.RESULT_DATA_STATE);
 
-                SharedPreferences sharedPreferences = getSharedPreferences("net.dividedattention.crowdvision",MODE_PRIVATE);
+                SharedPreferences sharedPreferences = getSharedPreferences("net.dividedattention.crowdvision", MODE_PRIVATE);
                 SharedPreferences.Editor editor = sharedPreferences.edit();
 
-                editor.putString("city",mCity);
-                editor.putString("state",mState);
+                editor.putString("city", mCity);
+                editor.putString("state", mState);
                 editor.commit();
 
                 //Toast.makeText(EventListActivity.this, "Current Location: "+mCity+", "+mState, Toast.LENGTH_SHORT).show();
-                createEventLists();
-            }else{
-                Toast.makeText(EventListActivity.this,"Error finding address",Toast.LENGTH_LONG).show();
+                //createEventLists();
+                mPresenter.loadEvents(mCity, mState);
+            } else {
+                Toast.makeText(EventListActivity.this, "Error finding address", Toast.LENGTH_LONG).show();
             }
         }
     }
@@ -413,18 +256,18 @@ public class EventListActivity extends AppCompatActivity implements GoogleApiCli
         //Register connection broadcast receiver
         mConnectionReceiver = new ConnectionBroadcastReceiver(this);
         IntentFilter filter = new IntentFilter(ConnectivityManager.CONNECTIVITY_ACTION);
-        registerReceiver(mConnectionReceiver,filter);
+        registerReceiver(mConnectionReceiver, filter);
 
         //Check network connectivity
         ConnectivityManager cm =
-                (ConnectivityManager)getSystemService(Context.CONNECTIVITY_SERVICE);
+                (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
         NetworkInfo activeNetwork = cm.getActiveNetworkInfo();
         boolean isConnected = activeNetwork != null &&
                 activeNetwork.isConnectedOrConnecting();
 
-        if(isConnected) {
+        if (isConnected) {
             checkLocationPermission();
-        }else {
+        } else {
             Log.d(TAG, "onStart: No network connection");
             Toast.makeText(this, "No network connection", Toast.LENGTH_SHORT).show();
         }
@@ -436,10 +279,45 @@ public class EventListActivity extends AppCompatActivity implements GoogleApiCli
         super.onStop();
     }
 
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        mPresenter.cleanUp();
+    }
+
     public Fragment findFragmentByPosition(int position) {
         ViewPager eventsViewPager = (ViewPager) findViewById(R.id.events_viewpager);
         return getSupportFragmentManager().findFragmentByTag(
                 "android:switcher:" + eventsViewPager.getId() + ":"
                         + mPagerAdapter.getItemId(position));
+    }
+
+    @Override
+    public void setPresenter(EventListContract.Presenter presenter) {
+
+    }
+
+    @Override
+    public void showNearbyEvent(CrowdEvent event) {
+        EventListFragment currentFragment = (EventListFragment) findFragmentByPosition(0);
+        if (currentFragment != null) {
+            currentFragment.showAddedEvent();
+        }
+    }
+
+    @Override
+    public void showRemoteEvent(CrowdEvent event) {
+        EventListFragment currentFragment = (EventListFragment) findFragmentByPosition(1);
+        if (currentFragment != null) {
+            currentFragment.showAddedEvent();
+        }
+    }
+
+    @Override
+    public void showExpiredEvent(CrowdEvent event) {
+        EventListFragment currentFragment = (EventListFragment) findFragmentByPosition(2);
+        if (currentFragment != null) {
+            currentFragment.showAddedEvent();
+        }
     }
 }

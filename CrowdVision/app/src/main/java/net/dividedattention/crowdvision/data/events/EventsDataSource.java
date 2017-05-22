@@ -3,6 +3,8 @@ package net.dividedattention.crowdvision.data.events;
 import android.graphics.Bitmap;
 import android.net.Uri;
 
+import com.androidhuman.rxfirebase2.database.ChildEvent;
+
 import net.dividedattention.crowdvision.data.CrowdEvent;
 import net.dividedattention.crowdvision.data.Photo;
 import net.dividedattention.crowdvision.data.User;
@@ -35,4 +37,12 @@ public interface EventsDataSource {
     Observable<Photo> getIndividualPhoto(String photoPath);
 
     Observable<User> getUser();
+
+    boolean cacheEvent(CrowdEvent event,boolean isNearby,boolean isCurrent);
+
+    List<CrowdEvent> getNearbyEvents();
+
+    List<CrowdEvent> getRemoteEvents();
+
+    List<CrowdEvent> getExpiredEvents();
 }

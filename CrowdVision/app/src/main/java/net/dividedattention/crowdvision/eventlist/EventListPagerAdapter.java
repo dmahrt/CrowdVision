@@ -9,18 +9,19 @@ import net.dividedattention.crowdvision.eventlist.EventListFragment;
 import net.dividedattention.crowdvision.data.CrowdEvent;
 
 import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Created by drewmahrt on 11/9/16.
  */
 
 public class EventListPagerAdapter extends FragmentPagerAdapter {
-    private ArrayList<CrowdEvent> mCurrentEvents, mRemoteEvents, mExpiredEvents;
+    private List<CrowdEvent> mCurrentEvents, mRemoteEvents, mExpiredEvents;
 
     public EventListPagerAdapter(FragmentManager fm,
-                                 ArrayList<CrowdEvent> currentEvents,
-                                 ArrayList<CrowdEvent> remoteEvents,
-                                 ArrayList<CrowdEvent> expiredEvents) {
+                                 List<CrowdEvent> currentEvents,
+                                 List<CrowdEvent> remoteEvents,
+                                 List<CrowdEvent> expiredEvents) {
         super(fm);
         mCurrentEvents = currentEvents;
         mRemoteEvents = remoteEvents;

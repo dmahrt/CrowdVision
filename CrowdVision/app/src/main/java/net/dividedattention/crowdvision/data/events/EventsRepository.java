@@ -10,6 +10,7 @@ import android.view.View;
 import android.widget.Toast;
 
 import com.androidhuman.rxfirebase2.database.ChildAddEvent;
+import com.androidhuman.rxfirebase2.database.ChildEvent;
 import com.androidhuman.rxfirebase2.database.RxFirebaseDatabase;
 import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
@@ -33,6 +34,12 @@ import net.dividedattention.crowdvision.eventphotos.EventPhotosActivity;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.Date;
+import java.util.List;
 
 import io.reactivex.Completable;
 import io.reactivex.Observable;
@@ -44,6 +51,7 @@ import io.reactivex.Single;
 
 public class EventsRepository implements EventsDataSource {
     private static final String TAG = "EventsRepository";
+    private static List<CrowdEvent> mCurrentEvents, mRemoteEvents, mExpiredEvents;
 
     private static EventsRepository instance = null;
     private Context mContext;
@@ -55,6 +63,9 @@ public class EventsRepository implements EventsDataSource {
     public static EventsRepository getInstance(Context context) {
         if (instance == null) {
             instance = new EventsRepository(context.getApplicationContext());
+            mCurrentEvents = new ArrayList<>();
+            mRemoteEvents = new ArrayList<>();
+            mExpiredEvents = new ArrayList<>();
         }
         return instance;
     }
@@ -97,8 +108,8 @@ public class EventsRepository implements EventsDataSource {
         DatabaseReference photoReference = FirebaseDatabase.getInstance().getReference().child(photoPath);
         DatabaseReference userReference = FirebaseDatabase.getInstance().getReference().child("users/" + FirebaseAuth.getInstance().getCurrentUser().getUid());
 
-        return RxFirebaseDatabase.setValue(photoReference,photo)
-                .mergeWith(RxFirebaseDatabase.setValue(userReference,user));
+        return RxFirebaseDatabase.setValue(photoReference, photo)
+                .mergeWith(RxFirebaseDatabase.setValue(userReference, user));
     }
 
     @Override
@@ -108,14 +119,14 @@ public class EventsRepository implements EventsDataSource {
             Bitmap selectedImage = MediaStore.Images.Media.getBitmap(mContext.getContentResolver(), uri);
             FirebaseStorage storage = FirebaseStorage.getInstance();
             StorageReference storageRef = storage.getReferenceFromUrl(mContext.getString(R.string.firebase_storage));
-            StorageReference spaceRef = storageRef.child("images/"+System.currentTimeMillis() + "_" + selectedImage.getByteCount()+".jpg");
+            StorageReference spaceRef = storageRef.child("images/" + System.currentTimeMillis() + "_" + selectedImage.getByteCount() + ".jpg");
 
-            DatabaseReference photosRef = FirebaseDatabase.getInstance().getReference().child("events/"+eventKey+"/photos");
+            DatabaseReference photosRef = FirebaseDatabase.getInstance().getReference().child("events/" + eventKey + "/photos");
 
             Log.d(TAG, "onActivityResult: Attempting to upload image");
 
             ByteArrayOutputStream baos = new ByteArrayOutputStream();
-            selectedImage.compress(Bitmap.CompressFormat.JPEG,50,baos);
+            selectedImage.compress(Bitmap.CompressFormat.JPEG, 50, baos);
             final byte[] imageData = baos.toByteArray();
 
 
@@ -125,7 +136,7 @@ public class EventsRepository implements EventsDataSource {
                         String imagePath = downloadUrl.toString();
                         Log.d(TAG, "onSuccess: " + imagePath);
 
-                        Photo photo = new Photo(imagePath,0);
+                        Photo photo = new Photo(imagePath, 0);
                         DatabaseReference subRef = photosRef.push();
                         photo.setKey(subRef.getKey());
                         return rx.Observable.just(subRef.setValue(photo));
@@ -150,20 +161,24 @@ public class EventsRepository implements EventsDataSource {
 
     @Override
     public Observable<CrowdEvent> getEvents() {
-        return null;
+        DatabaseReference eventsRef = FirebaseDatabase.getInstance().getReference().child("events");
+        return RxFirebaseDatabase
+                .childEvents(eventsRef)
+                .ofType(ChildAddEvent.class)
+                .map(childAddEvent -> childAddEvent.dataSnapshot().getValue(CrowdEvent.class));
     }
 
     @Override
     public Single<CrowdEvent> getSingleEvent(String eventKey) {
-        DatabaseReference eventRef = FirebaseDatabase.getInstance().getReference().child("events/"+eventKey);
+        DatabaseReference eventRef = FirebaseDatabase.getInstance().getReference().child("events/" + eventKey);
 
         return RxFirebaseDatabase
-                .dataOf(eventRef,CrowdEvent.class);
+                .dataOf(eventRef, CrowdEvent.class);
     }
 
     @Override
     public Observable<Photo> getPhotos(String eventKey) {
-        DatabaseReference photosRef = FirebaseDatabase.getInstance().getReference().child("events/"+eventKey+"/photos");
+        DatabaseReference photosRef = FirebaseDatabase.getInstance().getReference().child("events/" + eventKey + "/photos");
         return RxFirebaseDatabase
                 .childEvents(photosRef)
                 .ofType(ChildAddEvent.class)
@@ -197,5 +212,35 @@ public class EventsRepository implements EventsDataSource {
                     Log.d(TAG, "flatmap user: retrieved user");
                     return user;
                 });
+    }
+
+    @Override
+    public boolean cacheEvent(CrowdEvent event, boolean isNearby, boolean isCurrent) {
+        if(!isCurrent && !mExpiredEvents.contains(event)){
+            mExpiredEvents.add(event);
+            return true;
+        } else if (isNearby && isCurrent && !mCurrentEvents.contains(event)) {
+            mCurrentEvents.add(event);
+            return true;
+        } else if (!isNearby && isCurrent && !mRemoteEvents.contains(event)) {
+            mRemoteEvents.add(event);
+            return true;
+        }
+        return false;
+    }
+
+    @Override
+    public List<CrowdEvent> getNearbyEvents() {
+        return mCurrentEvents;
+    }
+
+    @Override
+    public List<CrowdEvent> getRemoteEvents() {
+        return mRemoteEvents;
+    }
+
+    @Override
+    public List<CrowdEvent> getExpiredEvents() {
+        return mExpiredEvents;
     }
 }
