@@ -40,6 +40,8 @@ import com.google.firebase.storage.StorageReference;
 import com.google.firebase.storage.UploadTask;
 
 import net.dividedattention.crowdvision.data.events.EventsRepository;
+import net.dividedattention.crowdvision.eventlist.EventListContract;
+import net.dividedattention.crowdvision.eventlist.EventListPresenter;
 import net.dividedattention.crowdvision.util.AddressServiceConstants;
 import net.dividedattention.crowdvision.data.CrowdEvent;
 import net.dividedattention.crowdvision.R;
@@ -63,7 +65,7 @@ public class CreateEventActivity extends AppCompatActivity implements DatePicker
     private String mEndDate;
     private Bitmap mSelectedImage;
 
-    private CreateEventPresenter mPresenter;
+    private CreateEventContract.Presenter mPresenter;
 
 
     private int PICK_IMAGE_REQUEST = 1;
@@ -78,6 +80,8 @@ public class CreateEventActivity extends AppCompatActivity implements DatePicker
         ActionBar actionBar = getSupportActionBar();
         actionBar.setTitle(getString(R.string.create_event_activity_title));
 
+        attachPresenter();
+
         mSubmitButton = (Button)findViewById(R.id.submit_button);
         mChooseImageButton = (Button)findViewById(R.id.choose_image_button);
 
@@ -85,7 +89,6 @@ public class CreateEventActivity extends AppCompatActivity implements DatePicker
         mLocationText = (TextView) findViewById(R.id.location_text);
         mDateText = (TextView) findViewById(R.id.date_text);
 
-        mPresenter = new CreateEventPresenter(this,EventsRepository.getInstance(this));
 
         mEventImageView = (ImageView)findViewById(R.id.event_image);
         mLocationImage = (ImageView)findViewById(R.id.location_image);
@@ -145,6 +148,25 @@ public class CreateEventActivity extends AppCompatActivity implements DatePicker
                 }
             }
         });
+    }
+
+    private void attachPresenter() {
+        mPresenter = (CreateEventContract.Presenter) getLastCustomNonConfigurationInstance();
+        if (mPresenter == null) {
+            mPresenter = new CreateEventPresenter(EventsRepository.getInstance(this));
+        }
+        mPresenter.attachView(this);
+    }
+
+    @Override
+    public Object onRetainCustomNonConfigurationInstance() {
+        return mPresenter;
+    }
+
+    @Override
+    protected void onDestroy() {
+        mPresenter.detachView();
+        super.onDestroy();
     }
 
     @Override

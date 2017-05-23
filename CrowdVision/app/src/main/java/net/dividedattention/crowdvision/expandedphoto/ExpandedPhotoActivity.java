@@ -19,10 +19,11 @@ import net.dividedattention.crowdvision.data.Photo;
 import net.dividedattention.crowdvision.data.User;
 import net.dividedattention.crowdvision.data.events.EventsRepository;
 import net.dividedattention.crowdvision.eventcreate.CreateEventContract;
+import net.dividedattention.crowdvision.eventcreate.CreateEventPresenter;
 
 import io.reactivex.disposables.CompositeDisposable;
 
-public class ExpandedPhotoActivity extends AppCompatActivity implements ExpandedPhotoContract.View{
+public class ExpandedPhotoActivity extends AppCompatActivity implements ExpandedPhotoContract.View {
     private static final String TAG = "ExpandedPhotoActivity";
     public static final String PHOTO_URL_KEY = "photo_url";
     public static final String TRANSITION_KEY = "transition_key";
@@ -41,7 +42,7 @@ public class ExpandedPhotoActivity extends AppCompatActivity implements Expanded
         mFavImage = (ImageView) findViewById(R.id.fav_image);
         mLikesText = (TextView) findViewById(R.id.likes_text);
 
-        mPresenter = new ExpandedPhotoPresenter(this, EventsRepository.getInstance(this));
+        attachPresenter();
 
         ImageView imageView = (ImageView) findViewById(R.id.image);
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
@@ -50,6 +51,19 @@ public class ExpandedPhotoActivity extends AppCompatActivity implements Expanded
 
         mFavImage.setOnClickListener(v -> mPresenter.toggleLikeStatus());
 
+    }
+
+    private void attachPresenter() {
+        mPresenter = (ExpandedPhotoContract.Presenter) getLastCustomNonConfigurationInstance();
+        if (mPresenter == null) {
+            mPresenter = new ExpandedPhotoPresenter(EventsRepository.getInstance(this));
+        }
+        mPresenter.attachView(this);
+    }
+
+    @Override
+    public Object onRetainCustomNonConfigurationInstance() {
+        return mPresenter;
     }
 
     @Override
@@ -91,8 +105,7 @@ public class ExpandedPhotoActivity extends AppCompatActivity implements Expanded
 
     @Override
     protected void onDestroy() {
+        mPresenter.detachView();
         super.onDestroy();
-        Log.d(TAG, "onDestroy: cleaning up");
-        mPresenter.cleanUp();
     }
 }

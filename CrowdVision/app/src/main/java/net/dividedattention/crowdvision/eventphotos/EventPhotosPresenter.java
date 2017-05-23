@@ -31,15 +31,9 @@ public class EventPhotosPresenter implements EventPhotosContract.Presenter {
     private CompositeDisposable mCompositeDisposable;
 
 
-    public EventPhotosPresenter(EventPhotosContract.View view, EventsDataSource dataSource) {
-        mView = view;
+    public EventPhotosPresenter(EventsDataSource dataSource) {
         mRepository = dataSource;
         mCompositeDisposable = new CompositeDisposable();
-    }
-
-    @Override
-    public void start() {
-
     }
 
     private boolean isCurrentEvent(String date){
@@ -72,7 +66,7 @@ public class EventPhotosPresenter implements EventPhotosContract.Presenter {
         mRepository.getSingleEvent(eventKey)
                 .subscribe(event -> {
                     boolean isValidEvent = city != null && state != null && state.equals(event.getState()) && city.equals(event.getCity()) && isCurrentEvent(event.getEndDate());
-                    mView.showAddPhotoButton(isValidEvent);
+                    if(mView!=null)mView.showAddPhotoButton(isValidEvent);
                 });
 
         Log.d(TAG, "loadEventInfo: "+eventKey);
@@ -91,7 +85,12 @@ public class EventPhotosPresenter implements EventPhotosContract.Presenter {
     }
 
     @Override
-    public void cleanUp() {
+    public void attachView(EventPhotosContract.View view) {
+        mView = view;
+    }
+
+    @Override
+    public void detachView() {
         mCompositeDisposable.clear();
         mView = null;
     }
