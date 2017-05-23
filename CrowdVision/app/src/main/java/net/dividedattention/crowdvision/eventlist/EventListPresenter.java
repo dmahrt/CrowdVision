@@ -1,10 +1,9 @@
 package net.dividedattention.crowdvision.eventlist;
 
-import android.util.Log;
-
 import com.androidhuman.rxfirebase2.database.ChildAddEvent;
 import com.androidhuman.rxfirebase2.database.ChildChangeEvent;
 
+import net.dividedattention.crowdvision.BaseView;
 import net.dividedattention.crowdvision.data.CrowdEvent;
 import net.dividedattention.crowdvision.data.events.EventsDataSource;
 
@@ -20,22 +19,16 @@ import io.reactivex.disposables.CompositeDisposable;
  * Created by drewmahrt on 5/21/17.
  */
 
-public class EventListPresenter implements EventListContract.Presenter {
+public class EventListPresenter implements EventListContract.Presenter{
     private EventListContract.View mView;
     private EventsDataSource mDataSource;
     private CompositeDisposable mCompositeDisposable;
 
     private String mCity, mState;
 
-    public EventListPresenter(EventListContract.View view, EventsDataSource dataSource) {
-        mView = view;
+    public EventListPresenter(EventsDataSource dataSource) {
         mDataSource = dataSource;
         mCompositeDisposable = new CompositeDisposable();
-    }
-
-    @Override
-    public void start() {
-
     }
 
     @Override
@@ -68,12 +61,6 @@ public class EventListPresenter implements EventListContract.Presenter {
                             mView.showUpdatedExpiredEvent(mDataSource.getExpiredEvents().indexOf(event));
                     }
                 }, throwable -> throwable.printStackTrace());
-    }
-
-    @Override
-    public void cleanUp() {
-        mCompositeDisposable.clear();
-        mView = null;
     }
 
     @Override
@@ -116,5 +103,16 @@ public class EventListPresenter implements EventListContract.Presenter {
         }
 
         return true;
+    }
+
+    @Override
+    public void attachView(EventListContract.View view) {
+        mView = view;
+    }
+
+    @Override
+    public void detachView() {
+        mCompositeDisposable.clear();
+        mView = null;
     }
 }

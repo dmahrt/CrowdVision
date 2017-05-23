@@ -24,14 +24,9 @@ public class ExpandedPhotoPresenter implements ExpandedPhotoContract.Presenter {
     private User mCurrentUser;
     private String mPhotoPath, mPhotoKey;
 
-    public ExpandedPhotoPresenter(ExpandedPhotoContract.View view, EventsDataSource eventsDataSource) {
-        mView = view;
+    public ExpandedPhotoPresenter(EventsDataSource eventsDataSource) {
         mEventsDataSource = eventsDataSource;
         mCompositeDisposable = new CompositeDisposable();
-    }
-
-    @Override
-    public void start() {
     }
 
     @Override
@@ -87,7 +82,12 @@ public class ExpandedPhotoPresenter implements ExpandedPhotoContract.Presenter {
     }
 
     @Override
-    public void cleanUp() {
+    public void attachView(ExpandedPhotoContract.View view) {
+        mView = view;
+    }
+
+    @Override
+    public void detachView() {
         mCompositeDisposable.clear();
         mView = null;
     }

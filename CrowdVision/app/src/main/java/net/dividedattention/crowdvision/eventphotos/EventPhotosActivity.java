@@ -38,6 +38,8 @@ import net.dividedattention.crowdvision.R;
 import net.dividedattention.crowdvision.data.CrowdEvent;
 import net.dividedattention.crowdvision.data.Photo;
 import net.dividedattention.crowdvision.data.events.EventsRepository;
+import net.dividedattention.crowdvision.eventcreate.CreateEventContract;
+import net.dividedattention.crowdvision.eventcreate.CreateEventPresenter;
 import net.dividedattention.crowdvision.expandedphoto.ExpandedPhotoActivity;
 
 import java.io.ByteArrayOutputStream;
@@ -49,7 +51,7 @@ import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
 
-public class EventPhotosActivity extends AppCompatActivity implements PhotoClickListener, EventPhotosContract.View{
+public class EventPhotosActivity extends AppCompatActivity implements PhotoClickListener, EventPhotosContract.View {
     private static final String TAG = "EventPhotosActivity";
 
     private EventPhotosContract.Presenter mPresenter;
@@ -66,7 +68,7 @@ public class EventPhotosActivity extends AppCompatActivity implements PhotoClick
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_event_photos);
 
-        mPresenter = new EventPhotosPresenter(this, EventsRepository.getInstance(this));
+        attachPresenter();
 
         String eventTitle = getIntent().getStringExtra("eventTitle");
 
@@ -80,12 +82,12 @@ public class EventPhotosActivity extends AppCompatActivity implements PhotoClick
         mAdapter = new EventPhotosRecyclerViewAdapter(mPhotos, this);
         //mAdapter.setHasStableIds(true);
         mRecyclerView = (RecyclerView) findViewById(R.id.photos_recycler);
-        GridLayoutManager gridLayoutManager = new GridLayoutManager(this,2);
+        GridLayoutManager gridLayoutManager = new GridLayoutManager(this, 2);
         mRecyclerView.setHasFixedSize(true);
         mRecyclerView.setLayoutManager(gridLayoutManager);
         mRecyclerView.setAdapter(mAdapter);
 
-        final FloatingActionButton fab = (FloatingActionButton)findViewById(R.id.fab);
+        final FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.fab);
         fab.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
@@ -97,21 +99,32 @@ public class EventPhotosActivity extends AppCompatActivity implements PhotoClick
         });
 
         SharedPreferences sharedPreferences = getSharedPreferences("net.dividedattention.crowdvision", Context.MODE_PRIVATE);
-        String city = sharedPreferences.getString("city",null);
-        String state = sharedPreferences.getString("state",null);
+        String city = sharedPreferences.getString("city", null);
+        String state = sharedPreferences.getString("state", null);
 
-        mPresenter.loadEventInfo(getIntent().getStringExtra("eventKey"),city,state);
+        mPresenter.loadEventInfo(getIntent().getStringExtra("eventKey"), city, state);
     }
 
+    private void attachPresenter() {
+        mPresenter = (EventPhotosContract.Presenter) getLastCustomNonConfigurationInstance();
+        if (mPresenter == null) {
+            mPresenter = new EventPhotosPresenter(EventsRepository.getInstance(this));
+        }
+        mPresenter.attachView(this);
+    }
 
+    @Override
+    public Object onRetainCustomNonConfigurationInstance() {
+        return mPresenter;
+    }
 
 
     @Override
     public void onActivityResult(int requestCode, int resultCode, Intent data) {
-        if(resultCode == Activity.RESULT_OK){
-            if(requestCode == PICK_IMAGE_REQUEST){
+        if (resultCode == Activity.RESULT_OK) {
+            if (requestCode == PICK_IMAGE_REQUEST) {
                 Uri uri = data.getData();
-                mPresenter.addPhotoClicked(getIntent().getStringExtra("eventKey"),uri);
+                mPresenter.addPhotoClicked(getIntent().getStringExtra("eventKey"), uri);
             }
         }
     }
@@ -120,22 +133,22 @@ public class EventPhotosActivity extends AppCompatActivity implements PhotoClick
     public void onPhotoClicked(String photoUrl, ImageView imageView, int position, String key) {
         String eventKey = getIntent().getStringExtra("eventKey");
         Intent expandedIntent = new Intent(this, ExpandedPhotoActivity.class);
-        expandedIntent.putExtra(ExpandedPhotoActivity.PHOTO_URL_KEY,photoUrl);
-        expandedIntent.putExtra(ExpandedPhotoActivity.TRANSITION_KEY,position+"_image");
-        expandedIntent.putExtra(ExpandedPhotoActivity.PHOTO_PATH_KEY,"events/"+eventKey+"/photos/"+key);
+        expandedIntent.putExtra(ExpandedPhotoActivity.PHOTO_URL_KEY, photoUrl);
+        expandedIntent.putExtra(ExpandedPhotoActivity.TRANSITION_KEY, position + "_image");
+        expandedIntent.putExtra(ExpandedPhotoActivity.PHOTO_PATH_KEY, "events/" + eventKey + "/photos/" + key);
 
         ActivityOptionsCompat options = ActivityOptionsCompat.
                 makeSceneTransitionAnimation(this,
                         imageView,
-                        position+"_image");
+                        position + "_image");
 
-        startActivity(expandedIntent,options.toBundle());
+        startActivity(expandedIntent, options.toBundle());
     }
 
     @Override
     protected void onDestroy() {
+        mPresenter.detachView();
         super.onDestroy();
-        mPresenter.cleanUp();
     }
 
     //View Contract methods
@@ -147,8 +160,8 @@ public class EventPhotosActivity extends AppCompatActivity implements PhotoClick
 
     @Override
     public void showAddPhotoButton(boolean shouldShow) {
-        FloatingActionButton fab = (FloatingActionButton)findViewById(R.id.fab);
-        if(shouldShow)
+        FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.fab);
+        if (shouldShow)
             fab.setVisibility(View.VISIBLE);
         else
             fab.setVisibility(View.GONE);

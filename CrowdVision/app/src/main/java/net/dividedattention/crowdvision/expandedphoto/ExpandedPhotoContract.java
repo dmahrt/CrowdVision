@@ -14,9 +14,8 @@ public interface ExpandedPhotoContract {
         void showImage(String photoUrl);
     }
 
-    interface Presenter extends BasePresenter{
+    interface Presenter extends BasePresenter<View>{
         void toggleLikeStatus();
         void loadImageData(String photoPath);
-        void cleanUp();
     }
 }

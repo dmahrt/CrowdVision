@@ -34,6 +34,7 @@ import com.google.android.gms.tasks.Task;
 import com.google.firebase.auth.FirebaseAuth;
 import com.tbruyelle.rxpermissions2.RxPermissions;
 
+import net.dividedattention.crowdvision.BaseView;
 import net.dividedattention.crowdvision.data.events.EventsRepository;
 import net.dividedattention.crowdvision.eventcreate.CreateEventActivity;
 import net.dividedattention.crowdvision.login.LoginActivity;
@@ -64,7 +65,7 @@ public class EventListActivity extends AppCompatActivity implements GoogleApiCli
         toolbar.setTitle(getString(R.string.event_list_activity_title));
         setSupportActionBar(toolbar);
 
-        mPresenter = new EventListPresenter(this, EventsRepository.getInstance(this));
+        attachPresenter();
 
         //Check if user is logged in
         FirebaseAuth auth = FirebaseAuth.getInstance();
@@ -102,6 +103,19 @@ public class EventListActivity extends AppCompatActivity implements GoogleApiCli
         mEventsViewPager.setAdapter(mPagerAdapter);
         TabLayout tabLayout = (TabLayout) findViewById(R.id.tablayout);
         tabLayout.setupWithViewPager(mEventsViewPager);
+    }
+
+    private void attachPresenter() {
+        mPresenter = (EventListContract.Presenter) getLastCustomNonConfigurationInstance();
+        if (mPresenter == null) {
+            mPresenter = new EventListPresenter(EventsRepository.getInstance(this));
+        }
+        mPresenter.attachView(this);
+    }
+
+    @Override
+    public Object onRetainCustomNonConfigurationInstance() {
+        return mPresenter;
     }
 
     private void checkLocationPermission() {
@@ -149,7 +163,7 @@ public class EventListActivity extends AppCompatActivity implements GoogleApiCli
     public boolean onOptionsItemSelected(MenuItem item) {
         switch (item.getItemId()) {
             case R.id.action_logout:
-                mPresenter.cleanUp();
+                mPresenter.detachView();
                 AuthUI.getInstance()
                         .signOut(this)
                         .addOnCompleteListener(new OnCompleteListener<Void>() {
@@ -175,24 +189,6 @@ public class EventListActivity extends AppCompatActivity implements GoogleApiCli
                     if (mLastLocation != null)
                         startIntentService(mLastLocation);
                 });
-//        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
-//            // TODO: Consider calling
-//            //    ActivityCompat#requestPermissions
-//            // here to request the missing permissions, and then overriding
-//            //   public void onRequestPermissionsResult(int requestCode, String[] permissions,
-//            //                                          int[] grantResults)
-//            // to handle the case where the user grants the permission. See the documentation
-//            // for ActivityCompat#requestPermissions for more details.
-//            return;
-//        } else {
-//            mLastLocation = LocationServices.FusedLocationApi.getLastLocation(
-//                    mGoogleApiClient);
-//            if (mLastLocation != null) {
-//                startIntentService(mLastLocation);
-//            } else {
-//                Toast.makeText(this, "Could not find location", Toast.LENGTH_SHORT).show();
-//            }
-//        }
     }
 
     @Override
@@ -209,6 +205,11 @@ public class EventListActivity extends AppCompatActivity implements GoogleApiCli
     @Override
     public void connectionResumed() {
         checkLocationPermission();
+    }
+
+    @Override
+    public void setPresenter(EventListContract.Presenter presenter) {
+
     }
 
 
@@ -281,8 +282,8 @@ public class EventListActivity extends AppCompatActivity implements GoogleApiCli
 
     @Override
     protected void onDestroy() {
+        mPresenter.detachView();
         super.onDestroy();
-        mPresenter.cleanUp();
     }
 
     public Fragment findFragmentByPosition(int position) {
@@ -292,10 +293,6 @@ public class EventListActivity extends AppCompatActivity implements GoogleApiCli
                         + mPagerAdapter.getItemId(position));
     }
 
-    @Override
-    public void setPresenter(EventListContract.Presenter presenter) {
-
-    }
 
     @Override
     public void showNearbyEvent(CrowdEvent event) {

@@ -16,9 +16,8 @@ public interface EventPhotosContract {
         void showNewPhoto(Photo photo);
     }
 
-    interface Presenter extends BasePresenter{
+    interface Presenter extends BasePresenter<View>{
         void loadEventInfo(String eventKey, String city, String state);
         void addPhotoClicked(String eventKey, Uri uri);
-        void cleanUp();
     }
 }

@@ -14,39 +14,45 @@ public class CreateEventPresenter implements CreateEventContract.Presenter {
     private EventsDataSource mEventsDataSource;
 
 
-    public CreateEventPresenter(CreateEventContract.View view, EventsDataSource dataSource) {
-        mView = view;
+    public CreateEventPresenter(EventsDataSource dataSource) {
         mEventsDataSource = dataSource;
     }
 
     @Override
-    public void start() {
-
-    }
-
-    @Override
     public void checkImageRatio(Bitmap selectedImage) {
-        if(selectedImage.getHeight() >= selectedImage.getWidth()) {
-            mView.showPhotoRatioWarning();
-        } else {
-            mView.dismissRationWarning();
+        if(mView != null) {
+            if (selectedImage.getHeight() >= selectedImage.getWidth()) {
+                mView.showPhotoRatioWarning();
+            } else {
+                mView.dismissRationWarning();
+            }
         }
     }
 
     @Override
     public void retrieveGalleryImage(Uri uri) {
-        mView.showGalleryImage(mEventsDataSource.getImageFromGallery(uri));
+        if(mView != null)
+            mView.showGalleryImage(mEventsDataSource.getImageFromGallery(uri));
     }
 
     @Override
     public void saveEvent(String title, String location, String city, String state, String endDate, Bitmap image) {
-        if(title.isEmpty() || location == null || city == null || state == null || endDate == null || image == null)
+        if(mView != null && title.isEmpty() || location == null || city == null || state == null || endDate == null || image == null)
             mView.showIncompleteErrors(!title.isEmpty(), endDate != null, location != null, image != null);
         else{
             mEventsDataSource.addEvent(title,location,city,state,endDate,image)
-                    .subscribe(result -> mView.completePhotoUpload(),
-                            error -> mView.showUploadError());
+                    .subscribe(result -> {if(mView != null)mView.completePhotoUpload();},
+                            error -> {if(mView!=null)mView.showUploadError();});
         }
     }
 
+    @Override
+    public void attachView(CreateEventContract.View view) {
+        mView = view;
+    }
+
+    @Override
+    public void detachView() {
+        mView = null;
+    }
 }

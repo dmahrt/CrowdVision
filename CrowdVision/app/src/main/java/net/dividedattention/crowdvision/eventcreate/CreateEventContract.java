@@ -20,7 +20,7 @@ public interface CreateEventContract {
         void showUploadError();
     }
 
-    interface Presenter extends BasePresenter{
+    interface Presenter extends BasePresenter<View>{
         void checkImageRatio(Bitmap bitmap);
         void retrieveGalleryImage(Uri uri);
         void saveEvent(String title, String location, String city, String state, String endDate, Bitmap image);

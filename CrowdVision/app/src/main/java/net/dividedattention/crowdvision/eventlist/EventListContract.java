@@ -20,9 +20,8 @@ public interface EventListContract {
         void showUpdatedExpiredEvent(int position);
     }
 
-    interface Presenter extends BasePresenter{
+    interface Presenter extends BasePresenter<View>{
         void loadEvents(String city, String state);
-        void cleanUp();
         List<CrowdEvent> getNearbyEvents();
         List<CrowdEvent> getRemoteEvents();
         List<CrowdEvent> getExpiredEvents();
